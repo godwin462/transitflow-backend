@@ -7,8 +7,16 @@ import { Role } from 'generated/prisma/enums';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Post()
-  async createUser(@Body() payload: CreateUserDto, @Body() password: string) {
-    return this.userService.createUser(payload, Role.PASSENGER, password);
+  @Post('driver')
+  async createDriver(@Body() payload: CreateUserDto, @Body() password: string) {
+    return this.userService.createDriver(payload, password);
+  }
+
+  @Post('passenger')
+  async createPassenger(
+    @Body() payload: CreateUserDto,
+    @Body() password: string,
+  ) {
+    return this.userService.createPassenger(payload, password);
   }
 }

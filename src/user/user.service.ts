@@ -1,45 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { User } from 'generated/prisma/client';
 import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private authService: AuthService,
+  ) {}
 
-  async createUser(
-    payload: Omit<User, 'id' | 'role' | 'auth'>,
-    role: Role,
-    password: string,
-  ) {
-    const user = await this.prisma.user.create({
-      data: {
-        ...payload,
-        role,
-        // password,
-      },
-    });
-    await this.prisma.auth.create({
-      data: {
-        user: {
-          connect: {
-            id: user.id,
-          },
-        },
-        password,
-        token: '',
-      },
-    });
-
-    return user;
+  async createPassenger(payload: CreateUserDto, password: string) {
+    return this.authService.createUser(payload, Role.PASSENGER, password);
   }
 
-  async createPassenger(payload: User, password: string) {
-    return this.createUser(payload, Role.PASSENGER, password);
-  }
-
-  async createDriver(payload: User, password: string) {
-    return this.createUser(payload, Role.DRIVER, password);
+  async createDriver(payload: CreateUserDto, password: string) {
+    return this.authService.createUser(payload, Role.DRIVER, password);
   }
 
   async findUserById(id: string) {
@@ -66,7 +43,7 @@ export class UserService {
     });
   }
 
-  async updateUser(id: string, payload: User) {
+  async updateUser(id: string, payload: CreateUserDto) {
     return this.prisma.user.update({
       where: {
         id,
