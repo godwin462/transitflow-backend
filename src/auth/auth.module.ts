@@ -11,7 +11,7 @@ import { jwtConstants } from './constants';
     JwtModule.register({
       global: true,
       secret: jwtConstants.accessTokenSecret,
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: '7d' },
     }),
   ],
   providers: [AuthService, PrismaService, UserService, JwtService],

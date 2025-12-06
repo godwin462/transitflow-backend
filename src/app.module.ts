@@ -9,6 +9,7 @@ import { AuthService } from './auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { UserService } from './user/user.service';
 
 @Module({
   imports: [CacheModule.register(), UserModule, AuthModule],
@@ -18,6 +19,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     PrismaService,
     AuthService,
     JwtService,
+    UserService,
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

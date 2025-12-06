@@ -27,9 +27,16 @@ model User {
   firstName String?
   lastName  String?
   username  String     @unique
-  role      Role       @default(PASSENGER)
+  roles     UserRole[]
   auth      Auth?
   token     AuthToken?
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role
 }
 
 model Auth {

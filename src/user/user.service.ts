@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -9,6 +9,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserService {
   constructor(
     private prisma: PrismaService,
+    @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
   ) {}
 
@@ -29,6 +30,9 @@ export class UserService {
       where: {
         id,
       },
+      include: {
+        roles: true,
+      },
     });
   }
 
@@ -36,6 +40,9 @@ export class UserService {
     return this.prisma.user.findUnique({
       where: {
         email,
+      },
+      include: {
+        roles: true,
       },
     });
   }
@@ -58,6 +65,10 @@ export class UserService {
   }
 
   async findAllUsers() {
-    return this.prisma.user.findMany();
+    return this.prisma.user.findMany({
+      include: {
+        roles: true,
+      },
+    });
   }
 }
