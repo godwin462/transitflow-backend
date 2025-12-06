@@ -1,22 +1,33 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { Role } from 'generated/prisma/enums';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @Post('driver')
-  async createDriver(@Body() payload: CreateUserDto, @Body() password: string) {
-    return this.userService.createDriver(payload, password);
+  @Get(':id')
+  async findUserById(@Param('id') id: string) {
+    return this.userService.findUserById(id);
   }
 
-  @Post('passenger')
-  async createPassenger(
-    @Body() payload: CreateUserDto,
-    @Body() password: string,
-  ) {
-    return this.userService.createPassenger(payload, password);
+  @Get(':email')
+  async findUserByEmail(@Param('email') email: string) {
+    return this.userService.findUserByEmail(email);
+  }
+
+  @Get()
+  async findAllUsers() {
+    return this.userService.findAllUsers();
+  }
+
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string) {
+    return this.userService.deleteUser(id);
+  }
+
+  @Patch(':id')
+  async updateUser(@Param('id') id: string, @Body() payload: UpdateUserDto) {
+    return this.userService.updateUser(id, payload);
   }
 }

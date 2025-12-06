@@ -6,10 +6,22 @@ import { UserModule } from './user/user.module';
 import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './auth/auth.module';
 import { AuthService } from './auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [CacheModule.register(), UserModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService, PrismaService, AuthService],
+  providers: [
+    AppService,
+    PrismaService,
+    AuthService,
+    JwtService,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

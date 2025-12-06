@@ -12,19 +12,13 @@ export class AuthController {
   ) {}
 
   @Post('/register/passenger')
-  async registerPassenger(
-    @Body() payload: CreateUserDto,
-    @Body() password: string,
-  ) {
-    return this.userService.createPassenger(payload, password);
+  async registerPassenger(@Body() payload: CreateUserDto) {
+    return this.userService.createPassenger(payload);
   }
 
   @Post('/register/driver')
-  async registerDriver(
-    @Body() payload: CreateUserDto,
-    @Body() password: string,
-  ) {
-    return this.userService.createDriver(payload, password);
+  async registerDriver(@Body() payload: CreateUserDto) {
+    return this.userService.createDriver(payload);
   }
 
   @Post('/login')

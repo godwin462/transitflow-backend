@@ -3,6 +3,7 @@ import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthService } from 'src/auth/auth.service';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -11,12 +12,16 @@ export class UserService {
     private authService: AuthService,
   ) {}
 
-  async createPassenger(payload: CreateUserDto, password: string) {
-    return this.authService.createUser(payload, Role.PASSENGER, password);
+  async createPassenger(payload: CreateUserDto) {
+    return this.authService.createUser(
+      payload,
+      Role.PASSENGER,
+      payload.password,
+    );
   }
 
-  async createDriver(payload: CreateUserDto, password: string) {
-    return this.authService.createUser(payload, Role.DRIVER, password);
+  async createDriver(payload: CreateUserDto) {
+    return this.authService.createUser(payload, Role.DRIVER, payload.password);
   }
 
   async findUserById(id: string) {
@@ -43,12 +48,16 @@ export class UserService {
     });
   }
 
-  async updateUser(id: string, payload: CreateUserDto) {
+  async updateUser(id: string, payload: UpdateUserDto) {
     return this.prisma.user.update({
       where: {
         id,
       },
       data: payload,
     });
+  }
+
+  async findAllUsers() {
+    return this.prisma.user.findMany();
   }
 }

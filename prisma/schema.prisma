@@ -22,13 +22,14 @@ enum Role {
 }
 
 model User {
-  id        String @id @unique @default(cuid())
-  email     String @unique
-  firstName String
-  lastName  String
-  username  String @unique
-  role      Role   @default(PASSENGER)
+  id        String     @id @unique @default(cuid())
+  email     String     @unique
+  firstName String?
+  lastName  String?
+  username  String     @unique
+  role      Role       @default(PASSENGER)
   auth      Auth?
+  token     AuthToken?
 }
 
 model Auth {
@@ -36,5 +37,11 @@ model Auth {
   userId   String @unique
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   password String
-  token    String
+}
+
+model AuthToken {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token  String
 }

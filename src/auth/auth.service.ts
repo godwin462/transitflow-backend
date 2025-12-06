@@ -1,29 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { LoginUserDto } from 'src/user/dto/login.dto';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async createUser(payload: CreateUserDto, role: Role, password: string) {
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(password, salt);
+    console.log(passwordHash);
     const user = await this.prisma.user.create({
       data: {
-        ...payload,
+        email: payload.email,
+        username: payload.username,
         role,
       },
     });
     await this.prisma.auth.create({
       data: {
-        user: {
-          connect: {
-            id: user.id,
-          },
-        },
-        password,
-        token: '',
+        userId: user.id,
+        password: passwordHash,
       },
     });
 
@@ -35,21 +39,32 @@ export class AuthService {
       where: {
         email: payload.email,
       },
-    });
-    if (!user) {
-      throw new Error('User not found');
-    }
-    const auth = await this.prisma.auth.findUnique({
-      where: {
-        userId: user.id,
+      include: {
+        auth: true,
       },
     });
-    if (!auth) {
-      throw new Error('User not found');
+    // check if user exists
+    if (!user || !user.auth) {
+      throw new NotFoundException('User not found');
     }
+    // create auth tokens for the user
+    const accessToken = this.jwtService.sign({
+      userId: user.id,
+    });
+    const refreshToken = this.jwtService.sign({
+      userId: user.id,
+    });
+    await this.prisma.authToken.create({
+      data: {
+        userId: user.id,
+        token: refreshToken,
+      },
+    });
     return {
       user,
-      auth,
+      auth: user.auth,
+      accessToken,
+      refreshToken,
     };
   }
 }
