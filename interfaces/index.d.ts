@@ -6,3 +6,8 @@ declare interface UserInterface {
   username: string;
   role: Role;
 }
+declare interface RequestWithUser extends Request {
+  user: {
+    userId: string;
+  };
+}

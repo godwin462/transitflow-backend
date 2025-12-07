@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { LoginUserDto } from 'src/user/dto/login.dto';
+import { CreateUserDto } from 'src/auth/dto/create-user.dto';
+import { LoginUserDto } from 'src/auth/dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { UserService } from 'src/user/user.service';
@@ -80,9 +80,7 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new NotFoundException(
-        'User not found, check your credentials or create an account',
-      );
+      throw new NotFoundException('Invalid credentials');
     }
     const auth = await this.prisma.auth.findUnique({
       where: {
@@ -91,9 +89,7 @@ export class AuthService {
     });
     // check if user exists
     if (!auth) {
-      throw new NotFoundException(
-        'User not found, check your credentials or create an account',
-      );
+      throw new NotFoundException('Invalid credentials');
     }
     // console.log(payload);
     // check if password is correct
@@ -102,14 +98,12 @@ export class AuthService {
       auth.password,
     );
     if (!isPasswordValid) {
-      throw new BadRequestException(
-        'Invalid credentials, check your credentials or create an account',
-      );
+      throw new BadRequestException('Invalid credentials');
     }
 
     // create auth tokens for the user
+    const refreshToken = await this.generateRefreshToken(user.id);
     const accessToken = await this.getAccessToken(user.id);
-    const refreshToken = await this.getRefreshToken(user.id);
 
     return {
       user,
@@ -118,52 +112,99 @@ export class AuthService {
     };
   }
 
-  async getAccessToken(userId: string) {
-    const token = await this.prisma.authToken.findUnique({
+  async generateRefreshToken(userId: string) {
+    const refreshToken = this.jwtService.sign(
+      {
+        userId,
+      },
+      {
+        secret: jwtConstants.refreshTokenSecret,
+        expiresIn: '7d',
+      },
+    );
+    const salt = await bcrypt.genSalt(10);
+    const refreshTokenHash = await bcrypt.hash(refreshToken, salt);
+
+    await this.prisma.authToken.upsert({
       where: {
         userId,
       },
+      update: {
+        token: refreshTokenHash,
+      },
+      create: {
+        userId,
+        token: refreshTokenHash,
+      },
     });
-    if (token) {
-      const isTokenValid = this.jwtService.verify(token.token, {
-        secret: jwtConstants.accessTokenSecret,
-      });
-      if (isTokenValid) {
-        return token.token;
-      }
-      await this.prisma.authToken.deleteMany({
-        where: {
-          userId,
-        },
-      });
-    }
+
+    return refreshToken;
+  }
+
+  async getAccessToken(userId: string) {
     const accessToken = this.jwtService.sign(
       {
         userId,
       },
       {
         secret: jwtConstants.accessTokenSecret,
+        expiresIn: '15m',
       },
     );
-    await this.prisma.authToken.create({
-      data: {
-        userId,
-        token: accessToken,
-      },
-    });
     return accessToken;
   }
 
-  async getRefreshToken(userId: string) {
-    const refreshToken = this.jwtService.sign(
-      {
-        userId,
-      },
-      {
-        secret: jwtConstants.accessTokenSecret,
-        expiresIn: '1d',
-      },
-    );
-    return refreshToken;
+  async validateRefreshToken(userId: string, providedToken: string) {
+    const stored = await this.prisma.authToken.findUnique({
+      where: { userId },
+    });
+
+    if (!stored) throw new BadRequestException('No refresh token stored');
+
+    const match = await bcrypt.compare(providedToken, stored.token);
+    if (!match) throw new BadRequestException('Refresh token invalid');
+  }
+
+  async refreshTokens(refreshToken: string) {
+    // 1. Decode token to get userId
+    let decoded: any;
+    try {
+      decoded = this.jwtService.verify(refreshToken, {
+        secret: jwtConstants.refreshTokenSecret,
+      });
+    } catch {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const userId = decoded.userId;
+
+    // 2. Get saved hash from DB
+    const tokenRecord = await this.prisma.authToken.findUnique({
+      where: { userId },
+    });
+
+    if (!tokenRecord) {
+      throw new BadRequestException('Refresh token not found');
+    }
+
+    await this.validateRefreshToken(userId, refreshToken);
+
+    // 4. Generate new tokens
+    const newAccessToken = await this.getAccessToken(userId);
+    const newRefreshToken = await this.generateRefreshToken(userId);
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
+  async logout(userId: string) {
+    await this.prisma.authToken.deleteMany({
+      where: { userId },
+    });
+    return {
+      message: 'Logged out successfully',
+    };
   }
 }
