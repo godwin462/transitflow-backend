@@ -24,7 +24,7 @@ export class AuthService {
   ) {}
 
   async createUser(payload: CreateUserDto, role: Role, password: string) {
-    let existingUser = await this.prisma.user.findUnique({
+    const existingUserMail = await this.prisma.user.findUnique({
       where: {
         email: payload.email,
       },
@@ -32,19 +32,41 @@ export class AuthService {
         roles: true,
       },
     });
-    if (existingUser) {
-      if (existingUser.roles.some((roleItem) => roleItem.role === role)) {
+    const existingUserName = await this.prisma.user.findUnique({
+      where: {
+        username: payload.username,
+      },
+      include: {
+        roles: true,
+      },
+    });
+    if (existingUserMail) {
+      if (existingUserMail.roles.some((roleItem) => roleItem.role === role)) {
         throw new BadRequestException(
-          'User already exists, please login to continue',
+          'User already exists, please login to continue or create a new account',
         );
       }
       await this.prisma.userRole.create({
         data: {
-          userId: existingUser.id,
+          userId: existingUserMail.id,
           role,
         },
       });
-      return await this.userService.findUserById(existingUser.id);
+      return { message: 'Account created successfully' };
+    }
+    if (existingUserName) {
+      if (existingUserName.roles.some((roleItem) => roleItem.role === role)) {
+        throw new BadRequestException(
+          'User already exists, please login to continue or create a new account',
+        );
+      }
+      await this.prisma.userRole.create({
+        data: {
+          userId: existingUserName.id,
+          role,
+        },
+      });
+      return { message: 'Account created successfully' };
     }
 
     const salt = await bcrypt.genSalt();
@@ -67,7 +89,8 @@ export class AuthService {
       },
     });
 
-    return await this.userService.findUserById(newUser.id);
+    const updatedUser = await this.userService.findUserById(newUser.id);
+    return { message: 'Account created successfully', data: updatedUser };
   }
 
   async login(payload: LoginUserDto) {
@@ -102,8 +125,8 @@ export class AuthService {
     }
 
     // create auth tokens for the user
-    const refreshToken = await this.generateRefreshToken(user.id);
-    const accessToken = await this.getAccessToken(user.id);
+    const refreshToken = await this.generateRefreshToken(user.id, payload.role);
+    const accessToken = this.getAccessToken(user.id, payload.role);
 
     return {
       user,
@@ -112,10 +135,11 @@ export class AuthService {
     };
   }
 
-  async generateRefreshToken(userId: string) {
+  async generateRefreshToken(userId: string, role: string) {
     const refreshToken = this.jwtService.sign(
       {
         userId,
+        role,
       },
       {
         secret: jwtConstants.refreshTokenSecret,
@@ -141,10 +165,11 @@ export class AuthService {
     return refreshToken;
   }
 
-  async getAccessToken(userId: string) {
+  getAccessToken(userId: string, role: string) {
     const accessToken = this.jwtService.sign(
       {
         userId,
+        role,
       },
       {
         secret: jwtConstants.accessTokenSecret,
@@ -167,7 +192,7 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string) {
     // 1. Decode token to get userId
-    let decoded: any;
+    let decoded: JwtPayloadInterface;
     try {
       decoded = this.jwtService.verify(refreshToken, {
         secret: jwtConstants.refreshTokenSecret,
@@ -190,8 +215,11 @@ export class AuthService {
     await this.validateRefreshToken(userId, refreshToken);
 
     // 4. Generate new tokens
-    const newAccessToken = await this.getAccessToken(userId);
-    const newRefreshToken = await this.generateRefreshToken(userId);
+    const newAccessToken = this.getAccessToken(userId, decoded.role);
+    const newRefreshToken = await this.generateRefreshToken(
+      userId,
+      decoded.role,
+    );
 
     return {
       accessToken: newAccessToken,

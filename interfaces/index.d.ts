@@ -11,3 +11,7 @@ declare interface RequestWithUser extends Request {
     userId: string;
   };
 }
+declare interface JwtPayloadInterface {
+  userId: string;
+  role: string;
+}
