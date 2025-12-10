@@ -52,7 +52,7 @@ export class AuthService {
           role,
         },
       });
-      return { message: 'Account created successfully' };
+      return { message: 'Account created successfully', success: true };
     }
     if (existingUserName) {
       if (existingUserName.roles.some((roleItem) => roleItem.role === role)) {
@@ -66,7 +66,7 @@ export class AuthService {
           role,
         },
       });
-      return { message: 'Account created successfully' };
+      return { message: 'Account created successfully', success: true };
     }
 
     const salt = await bcrypt.genSalt();
@@ -89,8 +89,7 @@ export class AuthService {
       },
     });
 
-    const updatedUser = await this.userService.findUserById(newUser.id);
-    return { message: 'Account created successfully', data: updatedUser };
+    return { message: 'Account created successfully', success: true };
   }
 
   async login(payload: LoginUserDto) {
@@ -129,6 +128,7 @@ export class AuthService {
     const accessToken = this.getAccessToken(user.id, payload.role);
 
     return {
+      success: true,
       user,
       accessToken,
       refreshToken,
@@ -173,7 +173,7 @@ export class AuthService {
       },
       {
         secret: jwtConstants.accessTokenSecret,
-        expiresIn: '15m',
+        expiresIn: '1m',
       },
     );
     return accessToken;
@@ -233,6 +233,7 @@ export class AuthService {
     });
     return {
       message: 'Logged out successfully',
+      success: true,
     };
   }
 }

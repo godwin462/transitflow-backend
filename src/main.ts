@@ -1,8 +1,9 @@
 import 'dotenv/config';
-import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import type { ValidationError } from 'class-validator';
 
 const port = process.env.PORT ?? 8080;
 
@@ -11,7 +12,22 @@ async function bootstrap() {
 
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
-  app.useGlobalPipes(new ValidationPipe());
+  // app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      // ... other ValidationPipe options
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        // Extract the first error message or combine them into a single string
+        console.log(validationErrors);
+        const firstErrorMessage =
+          validationErrors.length > 0 && validationErrors[0].constraints
+            ? Object.values(validationErrors[0].constraints).join(' ')
+            : 'Validation failed'; // Default message if no errors
+
+        return new BadRequestException(firstErrorMessage);
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('TransitFlow API')
