@@ -10,20 +10,21 @@ import { JwtService } from '@nestjs/jwt';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { UserService } from './user/user.service';
+import { VehicleService } from './vehicle/vehicle.service';
+import { VehicleController } from './vehicle/vehicle.controller';
+import { VehicleModule } from './vehicle/vehicle.module';
+import { AuthGuard } from './auth/guards/auth.guard';
 
 @Module({
-  imports: [CacheModule.register(), UserModule, AuthModule],
-  controllers: [AppController],
+  imports: [CacheModule.register(), UserModule, AuthModule, VehicleModule],
+  controllers: [AppController, VehicleController],
   providers: [
     AppService,
     PrismaService,
     AuthService,
     JwtService,
     UserService,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
+    VehicleService,
   ],
 })
 export class AppModule {}

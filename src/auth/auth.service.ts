@@ -75,7 +75,8 @@ export class AuthService {
     const newUser = await this.prisma.user.create({
       data: {
         email: payload.email,
-        username: payload.username,
+        username:
+          payload.username.charAt(0).toUpperCase() + payload.username.slice(1),
         roles: {
           create: [{ role }],
         },
@@ -103,6 +104,13 @@ export class AuthService {
     });
     if (!user) {
       throw new NotFoundException('Invalid credentials');
+    }
+    if (
+      !user.roles.some(
+        (roleItem) => roleItem.role == payload.role.toUpperCase(),
+      )
+    ) {
+      throw new BadRequestException('Invalid credentials');
     }
     const auth = await this.prisma.auth.findUnique({
       where: {
@@ -173,7 +181,7 @@ export class AuthService {
       },
       {
         secret: jwtConstants.accessTokenSecret,
-        expiresIn: '1m',
+        expiresIn: '1h',
       },
     );
     return accessToken;
@@ -191,6 +199,11 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string) {
+    // await this.prisma.authToken.findFirstOrThrow({
+    //   where: {
+    //     token: refreshToken,
+    //   },
+    // });
     // 1. Decode token to get userId
     let decoded: JwtPayloadInterface;
     try {
@@ -198,7 +211,7 @@ export class AuthService {
         secret: jwtConstants.refreshTokenSecret,
       });
     } catch {
-      throw new BadRequestException('Invalid refresh token');
+      throw new BadRequestException('Invalid token');
     }
 
     const userId = decoded.userId;
@@ -209,7 +222,7 @@ export class AuthService {
     });
 
     if (!tokenRecord) {
-      throw new BadRequestException('Refresh token not found');
+      throw new BadRequestException('Invalid token');
     }
 
     await this.validateRefreshToken(userId, refreshToken);

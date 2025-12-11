@@ -26,6 +26,15 @@ enum Gender {
   FEMALE
 }
 
+enum VehicleCategory {
+  CAR
+  TRUCK
+  MOTORCYCLE
+  BUS
+  TRICYCLE
+  BIKE
+}
+
 model User {
   id        String     @id @unique @default(cuid())
   email     String     @unique
@@ -40,6 +49,7 @@ model User {
   dob       DateTime?
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  vehicle   Vehicle[]
 }
 
 model UserRole {
@@ -72,4 +82,33 @@ model Address {
   city   String
   state  String
   zip    String
+}
+
+model VehicleImage {
+  id        String   @id @default(cuid())
+  secureUrl String
+  secureId  String
+  vehicleId String   @unique
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vehicle {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images       VehicleImage[]
+  make         String
+  model        String
+  year         Int
+  color        String
+  licensePlate String          @unique
+  capacity     Int
+  vin          String          @unique
+  category     VehicleCategory
+  isPublic     Boolean         @default(false)
+  isVerified   Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }

@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/auth/dto/create-user.dto';
 import { LoginUserDto } from 'src/auth/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { AuthGuard } from './guards/auth.guard';
+import { Public } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -13,22 +13,26 @@ export class AuthController {
     private userService: UserService,
   ) {}
 
+  @Public()
+  @Public()
   @Post('/register/passenger')
   async registerPassenger(@Body() payload: CreateUserDto) {
     return this.userService.createPassenger(payload);
   }
 
+  @Public()
   @Post('/register/driver')
   async registerDriver(@Body() payload: CreateUserDto) {
     return this.userService.createDriver(payload);
   }
 
+  @Public()
   @Post('/login')
   async login(@Body() payload: LoginUserDto) {
     return this.authService.login(payload);
   }
 
-  // @UseGuards(AuthGuard)
+  @Public()
   @Post('/refresh-token')
   async refreshToken(@Body() payload: RefreshTokenDto) {
     // console.log(payload);
@@ -39,7 +43,6 @@ export class AuthController {
     };
   }
 
-  @UseGuards(AuthGuard)
   @Get('/me')
   async me(@Req() req: RequestWithUser) {
     return {
@@ -49,7 +52,6 @@ export class AuthController {
     };
   }
 
-  @UseGuards(AuthGuard)
   @Post('/logout')
   async logout(@Req() req: RequestWithUser) {
     return this.authService.logout(req.user.userId);

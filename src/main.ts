@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
+import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
 
 const port = process.env.PORT ?? 8080;
 
@@ -12,22 +13,18 @@ async function bootstrap() {
 
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
-  // app.useGlobalPipes(new ValidationPipe());
   app.useGlobalPipes(
     new ValidationPipe({
-      // ... other ValidationPipe options
       exceptionFactory: (validationErrors: ValidationError[] = []) => {
-        // Extract the first error message or combine them into a single string
-        console.log(validationErrors);
         const firstErrorMessage =
           validationErrors.length > 0 && validationErrors[0].constraints
-            ? Object.values(validationErrors[0].constraints).join(' ')
-            : 'Validation failed'; // Default message if no errors
-
+            ? Object.values(validationErrors[0].constraints).join(', ')
+            : 'Validation failed';
         return new BadRequestException(firstErrorMessage);
       },
     }),
   );
+  app.useGlobalFilters(new PrismaClientExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('TransitFlow API')
