@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { matchRoles } from '../utils/match-roles';
 import { Role } from 'generated/prisma/enums';
+import type { User, UserRole } from 'generated/prisma/client';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -16,9 +17,9 @@ export class RolesGuard implements CanActivate {
     if (!roles) {
       return true;
     }
-    const request = context.switchToHttp().getRequest();
+    const request: RequestWithUser = context.switchToHttp().getRequest();
     const user = request.user;
     // console.log(user, request);
-    return matchRoles(user, roles);
+    return matchRoles(user as User & { roles: UserRole[] }, roles);
   }
 }

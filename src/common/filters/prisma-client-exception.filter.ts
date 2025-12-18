@@ -1,7 +1,7 @@
 import {
   ArgumentsHost,
   Catch,
-  ExceptionFilter,
+  // ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
@@ -13,7 +13,7 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
   catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const message = exception.message.replace(/\n/g, '');
+    // const message = exception.message.replace(/\n/g, '');
 
     switch (exception.code) {
       case 'P2002': {
@@ -42,7 +42,29 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
         });
         break;
       }
+      case 'P2022': {
+        console.log(exception.meta);
+        const status = HttpStatus.BAD_REQUEST;
+        response.status(status).json({
+          statusCode: status,
+          message: 'No images provided',
+          error: 'Bad Request',
+        });
+        break;
+      }
+      case 'P1017': {
+        // database not connection unsuccessful
+        console.log(exception.meta);
+        const status = HttpStatus.BAD_REQUEST;
+        response.status(status).json({
+          statusCode: status,
+          message: 'Connection unavailable',
+          error: 'Bad Request',
+        });
+        break;
+      }
       default:
+        console.log(exception.code);
         // default 500 server error
         super.catch(exception, host);
         break;

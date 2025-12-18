@@ -8,7 +8,10 @@ declare interface UserInterface {
 }
 declare interface RequestWithUser extends Request {
   user: {
-    userId: string;
+    id: string;
+    email: string;
+    username: string;
+    roles: { role: string }[];
   };
 }
 declare interface JwtPayloadInterface {

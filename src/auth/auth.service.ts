@@ -66,6 +66,13 @@ export class AuthService {
           role,
         },
       });
+
+      await this.prisma.auth.create({
+        data: {
+          userId: existingUserName.id,
+          password,
+        },
+      });
       return { message: 'Account created successfully', success: true };
     }
 
@@ -105,11 +112,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('Invalid credentials');
     }
-    if (
-      !user.roles.some(
-        (roleItem) => roleItem.role == payload.role.toUpperCase(),
-      )
-    ) {
+    if (!user.roles.some((roleItem) => roleItem.role == payload.role)) {
       throw new BadRequestException('Invalid credentials');
     }
     const auth = await this.prisma.auth.findUnique({
@@ -131,6 +134,10 @@ export class AuthService {
       throw new BadRequestException('Invalid credentials');
     }
 
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { activeRole: payload.role },
+    });
     // create auth tokens for the user
     const refreshToken = await this.generateRefreshToken(user.id, payload.role);
     const accessToken = this.getAccessToken(user.id, payload.role);

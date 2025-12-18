@@ -14,9 +14,17 @@ import { VehicleService } from './vehicle/vehicle.service';
 import { VehicleController } from './vehicle/vehicle.controller';
 import { VehicleModule } from './vehicle/vehicle.module';
 import { AuthGuard } from './auth/guards/auth.guard';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CloudinaryService } from './cloudinary/cloudinary.service';
 
 @Module({
-  imports: [CacheModule.register(), UserModule, AuthModule, VehicleModule],
+  imports: [
+    CacheModule.register(),
+    UserModule,
+    AuthModule,
+    VehicleModule,
+    CloudinaryModule,
+  ],
   controllers: [AppController, VehicleController],
   providers: [
     AppService,
@@ -25,6 +33,7 @@ import { AuthGuard } from './auth/guards/auth.guard';
     JwtService,
     UserService,
     VehicleService,
+    CloudinaryService,
   ],
 })
 export class AppModule {}

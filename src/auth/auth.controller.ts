@@ -48,12 +48,12 @@ export class AuthController {
     return {
       message: 'User fetched successfully',
       success: true,
-      data: await this.userService.findUserById(req.user.userId),
+      data: await this.userService.findUserById(req.user.id),
     };
   }
 
   @Post('/logout')
   async logout(@Req() req: RequestWithUser) {
-    return this.authService.logout(req.user.userId);
+    return this.authService.logout(req.user.id);
   }
 }

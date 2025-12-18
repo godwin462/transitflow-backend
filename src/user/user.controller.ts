@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from '../auth/dto/update-user.dto';
+import { Public } from 'src/auth/decorators/auth.decorator';
 
 @Controller('user')
 export class UserController {
@@ -16,6 +17,7 @@ export class UserController {
     return this.userService.findUserByEmail(email);
   }
 
+  @Public()
   @Get()
   async findAllUsers() {
     return this.userService.findAllUsers();

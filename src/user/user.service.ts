@@ -16,13 +16,13 @@ export class UserService {
   async createPassenger(payload: CreateUserDto) {
     return this.authService.createUser(
       payload,
-      Role.PASSENGER,
+      Role.passenger,
       payload.password,
     );
   }
 
   async createDriver(payload: CreateUserDto) {
-    return this.authService.createUser(payload, Role.DRIVER, payload.password);
+    return this.authService.createUser(payload, Role.driver, payload.password);
   }
 
   async findUserById(id: string) {
