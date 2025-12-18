@@ -84,13 +84,14 @@ export class VehicleController {
   @UseInterceptors(FilesInterceptor('images', 5, imageUploadOptions))
   async updateVehicleById(
     @Param('id') id: string,
-    @Body() vehicle: UpdateVehicleDto,
+    @Body() payload: UpdateVehicleDto,
     @UploadedFiles(new FileSizeValidationPipe()) files: Express.Multer.File[],
   ) {
+    console.log(payload);
     return {
       message: 'Vehicle successfully updated',
       success: true,
-      data: await this.vehicleService.updateVehicleById(id, vehicle, files),
+      data: await this.vehicleService.updateVehicleById(id, payload, files),
     };
   }
 

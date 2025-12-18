@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsNumber, IsString, Min } from 'class-validator';
 import { VehicleCategory, VehicleSize } from 'generated/prisma/enums';
 
@@ -57,7 +57,11 @@ export class CreateVehicleDto {
   @ApiProperty({ required: true, description: 'Size of the vehicle' })
   size: VehicleSize;
 
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean; // Returns original value if it's not a boolean string
+  })
   @IsBoolean()
   @ApiProperty({ required: true, description: 'Is the vehicle public' })
   isPublic: boolean;

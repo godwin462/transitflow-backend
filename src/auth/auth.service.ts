@@ -110,7 +110,7 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new NotFoundException('Invalid credentials');
+      throw new NotFoundException('Account not found');
     }
     if (!user.roles.some((roleItem) => roleItem.role == payload.role)) {
       throw new BadRequestException('Invalid credentials');
