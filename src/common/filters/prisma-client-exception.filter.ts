@@ -47,7 +47,8 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
         const status = HttpStatus.BAD_REQUEST;
         response.status(status).json({
           statusCode: status,
-          message: 'No images provided',
+          message: (exception.meta?.driverAdapterError as DriverAdapterError)
+            ?.cause.originalMessage, //'No images provided',
           error: 'Bad Request',
         });
         break;

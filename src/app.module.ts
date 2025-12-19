@@ -16,6 +16,7 @@ import { VehicleModule } from './vehicle/vehicle.module';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
+import { ShiftModule } from './shift/shift.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
     AuthModule,
     VehicleModule,
     CloudinaryModule,
+    ShiftModule,
   ],
   controllers: [AppController, VehicleController],
   providers: [

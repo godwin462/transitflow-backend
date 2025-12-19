@@ -52,28 +52,27 @@ enum RideStatus {
 }
 
 model User {
-  id                 String     @id @unique @default(cuid())
-  email              String     @unique
-  firstName          String?
-  lastName           String?
-  phone              String?
-  active             Boolean    @default(true)
-  activeRole         Role?
-  isVerified         Boolean    @default(false)
-  username           String     @unique
-  roles              UserRole[]
-  auth               Auth?
-  token              AuthToken?
-  gender             Gender?
-  address            Address?
-  dob                DateTime?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  vehicle            Vehicle?
-  shifts             Shift[]
-  trips              Trip[]
-  driverLocations    Location[] @relation("DriverLocation")
-  passengerLocations Location[] @relation("PassengerLocation")
+  id         String     @id @unique @default(cuid())
+  email      String     @unique
+  firstName  String?
+  lastName   String?
+  phone      String?
+  active     Boolean    @default(true)
+  activeRole Role?
+  isVerified Boolean    @default(false)
+  username   String     @unique
+  roles      UserRole[]
+  auth       Auth?
+  token      AuthToken?
+  gender     Gender?
+  address    Address?
+  dob        DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  vehicle    Vehicle?
+  shifts     Shift[]
+  trips      Trip[]
+  locations  Location[]
 }
 
 model UserRole {
@@ -141,38 +140,36 @@ model Vehicle {
 }
 
 model Location {
-  id              String   @id @default(cuid())
-  latitude        Float
-  longitude       Float
-  address         String
-  driverId        String
-  driver          User     @relation("DriverLocation", fields: [driverId], references: [id], onDelete: Cascade)
-  passengerId     String
-  passenger       User     @relation("PassengerLocation", fields: [passengerId], references: [id], onDelete: Cascade)
-  tripId          String
-  shiftStart      Shift?   @relation("ShiftOrigin")
-  shiftEnd        Shift?   @relation("ShiftDestination")
-  tripOrigin      Trip?    @relation("TripDestination")
-  tripDestination Trip?    @relation("TripOrigin")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  latitude           Float
+  longitude          Float
+  address            String
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  shiftOriginId      String?  @unique
+  shiftOrigin        Shift?   @relation("ShiftOrigin", fields: [shiftOriginId], references: [id])
+  shiftDestinationId String?  @unique
+  shiftDestination   Shift?   @relation("ShiftDestination", fields: [shiftDestinationId], references: [id])
+  tripOrigin         Trip?    @relation("TripDestination")
+  tripDestination    Trip?    @relation("TripOrigin")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model Shift {
-  id            String    @id @default(cuid())
-  name          String
-  startTime     DateTime
-  endTime       DateTime?
-  driverId      String
-  driver        User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  vehicleId     String
-  vehicle       Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  originId      String    @unique
-  origin        Location  @relation("ShiftOrigin", fields: [originId], references: [id])
-  destinationId String    @unique
-  destination   Location  @relation("ShiftDestination", fields: [destinationId], references: [id])
+  id          String    @id @default(cuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime?
+  isActive    Boolean   @default(false)
+  driverId    String
+  driver      User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicleId   String
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  origin      Location? @relation("ShiftOrigin")
+  destination Location? @relation("ShiftDestination")
 }
 
 model Trip {
