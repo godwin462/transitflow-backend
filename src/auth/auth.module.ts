@@ -8,6 +8,8 @@ import { jwtConstants } from './constants';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { EmailService } from 'src/email/email.service';
+import { OtpService } from 'src/otp/otp.service';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { RolesGuard } from './guards/roles.guard';
     PrismaService,
     UserService,
     JwtService,
+    EmailService,
+    OtpService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

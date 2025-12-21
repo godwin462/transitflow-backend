@@ -52,27 +52,40 @@ enum RideStatus {
 }
 
 model User {
-  id         String     @id @unique @default(cuid())
-  email      String     @unique
-  firstName  String?
-  lastName   String?
-  phone      String?
-  active     Boolean    @default(true)
-  activeRole Role?
-  isVerified Boolean    @default(false)
-  username   String     @unique
-  roles      UserRole[]
-  auth       Auth?
-  token      AuthToken?
-  gender     Gender?
-  address    Address?
-  dob        DateTime?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  vehicle    Vehicle?
-  shifts     Shift[]
-  trips      Trip[]
-  locations  Location[]
+  id              String     @id @unique @default(cuid())
+  email           String     @unique
+  firstName       String?
+  lastName        String?
+  phone           String?
+  active          Boolean    @default(true)
+  activeRole      Role?
+  isEmailVerified Boolean    @default(false)
+  username        String     @unique
+  roles           UserRole[]
+  auth            Auth?
+  token           AuthToken?
+  gender          Gender?
+  address         Address?
+  dob             DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  vehicle         Vehicle?
+  shifts          Shift[]
+  trips           Trip[]
+  locations       Location[]
+  otp             Otp?
+}
+
+model Otp {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp        String
+  attempts   Int       @default(0)
+  retryAfter DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model UserRole {

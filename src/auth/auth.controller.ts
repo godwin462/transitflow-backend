@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/auth/dto/create-user.dto';
@@ -13,7 +13,6 @@ export class AuthController {
     private userService: UserService,
   ) {}
 
-  @Public()
   @Public()
   @Post('/register/passenger')
   async registerPassenger(@Body() payload: CreateUserDto) {
@@ -35,7 +34,7 @@ export class AuthController {
   @Public()
   @Post('/refresh-token')
   async refreshToken(@Body() payload: RefreshTokenDto) {
-    // console.log(payload);
+    console.log('Refresh token payload', payload);
     return {
       message: 'Token refreshed successfully',
       success: true,
@@ -45,6 +44,7 @@ export class AuthController {
 
   @Get('/me')
   async me(@Req() req: RequestWithUser) {
+    // console.log('Getting current auth user payload', req.user);
     return {
       message: 'User fetched successfully',
       success: true,
@@ -55,5 +55,17 @@ export class AuthController {
   @Post('/logout')
   async logout(@Req() req: RequestWithUser) {
     return this.authService.logout(req.user.id);
+  }
+
+  @Public()
+  @Post('/verify-account')
+  async verifyEmail(@Body() payload: { email: string; otp: string }) {
+    return this.authService.verifyUser(payload.email, payload.otp);
+  }
+
+  @Public()
+  @Post('/resend-verification-email')
+  async resendVerificationEmail(@Body() payload: { email: string }) {
+    return this.authService.resendVerificationEmail(payload.email);
   }
 }

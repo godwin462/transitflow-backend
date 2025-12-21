@@ -15,7 +15,7 @@ declare interface RequestWithUser extends Request {
   };
 }
 declare interface JwtPayloadInterface {
-  userId: string;
+  id: string;
   role: string;
 }
 
@@ -26,4 +26,17 @@ declare interface DriverAdapterError {
     kind: string;
     constraint: { fields: string[] };
   };
+}
+
+interface BrevoEmailResponse {
+  messageId?: string;
+  error?: {
+    message: string;
+  };
+}
+
+interface BrevoMailPayload {
+  email: string;
+  subject: string;
+  html: string;
 }

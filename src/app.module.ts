@@ -17,6 +17,8 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { ShiftModule } from './shift/shift.module';
+import { EmailService } from './email/email.service';
+import { OtpService } from './otp/otp.service';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { ShiftModule } from './shift/shift.module';
     UserService,
     VehicleService,
     CloudinaryService,
+    EmailService,
+    OtpService,
   ],
 })
 export class AppModule {}

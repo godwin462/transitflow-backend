@@ -87,7 +87,7 @@ export class VehicleController {
     @Body() payload: UpdateVehicleDto,
     @UploadedFiles(new FileSizeValidationPipe()) files: Express.Multer.File[],
   ) {
-    console.log(payload);
+    // console.log(payload);
     return {
       message: 'Vehicle successfully updated',
       success: true,

@@ -73,7 +73,7 @@ export class VehicleService {
   }
 
   async getVehicleById(id: string) {
-    console.log(id);
+    // console.log(id);
     return this.prisma.vehicle.findUnique({
       where: { id },
       include: { images: true },

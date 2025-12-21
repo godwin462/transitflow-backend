@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -42,22 +43,27 @@ export class AuthGuard implements CanActivate {
           secret: jwtConstants.accessTokenSecret,
         },
       );
+      // console.log('Payload from auth guard:', payload);
       await this.prisma.authToken.findUniqueOrThrow({
         where: {
-          userId: payload.userId,
+          userId: payload.id,
         },
       });
 
       const user = await this.prisma.user.findUniqueOrThrow({
         where: {
-          id: payload.userId,
+          id: payload.id,
         },
         include: {
           roles: true,
         },
       });
+      // if (!user.isEmailVerified) {
+      //   throw new BadRequestException('Account not verified');
+      // }
       request['user'] = user;
-    } catch {
+    } catch (err) {
+      console.log(err);
       throw new UnauthorizedException();
     }
     return true;

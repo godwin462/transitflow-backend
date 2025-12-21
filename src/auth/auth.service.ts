@@ -1,9 +1,7 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   NotFoundException,
-  forwardRef,
 } from '@nestjs/common';
 import { Role } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -11,16 +9,17 @@ import { CreateUserDto } from 'src/auth/dto/create-user.dto';
 import { LoginUserDto } from 'src/auth/dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
-import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from 'src/email/email.service';
+import { OtpService } from 'src/otp/otp.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
+    private otpService: OtpService,
+    private emailService: EmailService,
   ) {}
 
   async createUser(payload: CreateUserDto, role: Role, password: string) {
@@ -52,6 +51,11 @@ export class AuthService {
           role,
         },
       });
+      const { otp } = await this.otpService.createOtp(existingUserMail.id);
+      await this.emailService.sendAccountVerificationEmail(
+        existingUserMail,
+        otp,
+      );
       return { message: 'Account created successfully', success: true };
     }
     if (existingUserName) {
@@ -66,14 +70,18 @@ export class AuthService {
           role,
         },
       });
-
+      const { otp } = await this.otpService.createOtp(existingUserName.id);
+      await this.emailService.sendAccountVerificationEmail(
+        existingUserName,
+        otp,
+      );
       await this.prisma.auth.create({
         data: {
           userId: existingUserName.id,
           password,
         },
       });
-      return { message: 'Account created successfully', success: true };
+      return { message: 'Check your email for verification', success: true };
     }
 
     const salt = await bcrypt.genSalt();
@@ -97,7 +105,26 @@ export class AuthService {
       },
     });
 
-    return { message: 'Account created successfully', success: true };
+    const { otp } = await this.otpService.createOtp(newUser.id);
+    await this.emailService.sendAccountVerificationEmail(newUser, otp);
+    return { message: 'Check your email for verification', success: true };
+  }
+
+  async resendVerificationEmail(userEmail: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: userEmail,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('Invalid credentials');
+    }
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+    const { otp } = await this.otpService.createOtp(user.id);
+    await this.emailService.sendAccountVerificationEmail(user, otp);
+    return { message: 'Check your email for verification', success: true };
   }
 
   async login(payload: LoginUserDto) {
@@ -110,11 +137,12 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException('Invalid credentials');
     }
     if (!user.roles.some((roleItem) => roleItem.role == payload.role)) {
       throw new BadRequestException('Invalid credentials');
     }
+
     const auth = await this.prisma.auth.findUnique({
       where: {
         userId: user.id,
@@ -144,16 +172,36 @@ export class AuthService {
 
     return {
       success: true,
-      user,
+      data: user,
       accessToken,
       refreshToken,
     };
   }
 
+  async verifyUser(userEmail: string, otp: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: userEmail,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const verifyToken = await this.otpService.verifyOtp(user.id, otp);
+    if (!verifyToken) {
+      throw new BadRequestException('Invalid token');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isEmailVerified: true },
+    });
+    return { message: 'Account verified successfully', success: true };
+  }
+
   async generateRefreshToken(userId: string, role: string) {
     const refreshToken = this.jwtService.sign(
       {
-        userId,
+        id: userId,
         role,
       },
       {
@@ -183,7 +231,7 @@ export class AuthService {
   getAccessToken(userId: string, role: string) {
     const accessToken = this.jwtService.sign(
       {
-        userId,
+        id: userId,
         role,
       },
       {
@@ -221,8 +269,8 @@ export class AuthService {
       throw new BadRequestException('Invalid token');
     }
 
-    const userId = decoded.userId;
-
+    const userId = decoded.id;
+    // console.log('Decoded refresh token', decoded);
     // 2. Get saved hash from DB
     const tokenRecord = await this.prisma.authToken.findUnique({
       where: { userId },

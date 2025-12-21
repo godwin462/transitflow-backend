@@ -9,27 +9,43 @@ export class UserController {
 
   @Get(':id')
   async findUserById(@Param('id') id: string) {
-    return this.userService.findUserById(id);
+    return {
+      message: 'User fetched successfully',
+      data: await this.userService.findUserById(id),
+    };
   }
 
   @Get(':email')
   async findUserByEmail(@Param('email') email: string) {
-    return this.userService.findUserByEmail(email);
+    return {
+      message: 'User fetched successfully',
+      data: await this.userService.findUserByEmail(email),
+    };
   }
 
   @Public()
   @Get()
   async findAllUsers() {
-    return this.userService.findAllUsers();
+    return {
+      message: 'Users fetched successfully',
+      data: await this.userService.findAllUsers(),
+    };
   }
 
+  @Public()
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
-    return this.userService.deleteUser(id);
+    return {
+      message: 'User deleted successfully',
+      data: await this.userService.deleteUser(id),
+    };
   }
 
   @Patch(':id')
   async updateUser(@Param('id') id: string, @Body() payload: UpdateUserDto) {
-    return this.userService.updateUser(id, payload);
+    return {
+      message: 'User updated successfully',
+      data: await this.userService.updateUser(id, payload),
+    };
   }
 }
