@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -45,7 +44,7 @@ export class ShiftService {
         throw new NotFoundException('Driver not found');
       }
       const vehicle = await this.prisma.vehicle.findUnique({
-        where: { id: shiftPayload.vehicleId },
+        where: { userId: driverId },
       });
       if (!vehicle) {
         throw new NotFoundException('Vehicle not found');
@@ -53,7 +52,7 @@ export class ShiftService {
       const activeShift = await this.prisma.shift.findFirst({
         where: {
           driverId,
-          isActive: true,
+          status: 'active',
         },
       });
       if (activeShift) {
@@ -64,6 +63,8 @@ export class ShiftService {
       const shift = await this.prisma.shift.create({
         data: {
           ...shiftPayload,
+          vehicleId: vehicle.id,
+          // driverId,
           origin: {
             create: { ...originPayload, userId: driverId },
           },
@@ -74,6 +75,7 @@ export class ShiftService {
       });
       return shift;
     } catch (error) {
+      console.log('Create shift error: ', error);
       throw error;
     }
   }
@@ -88,10 +90,6 @@ export class ShiftService {
         throw new NotFoundException('Shift not found');
       }
 
-      if (!shiftExists.isActive) {
-        throw new BadRequestException('Shift not active');
-      }
-
       const shift = await this.prisma.shift.update({
         where: { id: shiftId },
         data: payload,
@@ -102,6 +100,7 @@ export class ShiftService {
       });
       return shift;
     } catch (error) {
+      console.log('Update shift error: ', error);
       throw error;
     }
   }

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsEnum, IsOptional } from 'class-validator';
+import { ShiftStatus } from 'generated/prisma/enums';
 
 export class UpdateShiftDto {
   @IsDate()
@@ -10,7 +11,7 @@ export class UpdateShiftDto {
   })
   endTime?: Date;
 
-  @IsBoolean()
+  @IsEnum(ShiftStatus)
   @IsOptional()
   @ApiProperty({
     description: 'Is the shift active',

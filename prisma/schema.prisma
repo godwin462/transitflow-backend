@@ -51,6 +51,14 @@ enum RideStatus {
   cancelled
 }
 
+enum ShiftStatus {
+  active
+  inactive
+  on_break
+  completed
+  cancelled
+}
+
 model User {
   id              String     @id @unique @default(cuid())
   email           String     @unique
@@ -170,19 +178,19 @@ model Location {
 }
 
 model Shift {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   startTime   DateTime
   endTime     DateTime?
-  isActive    Boolean   @default(false)
+  status      ShiftStatus @default(active)
   driverId    String
-  driver      User      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driver      User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
   vehicleId   String
-  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  origin      Location? @relation("ShiftOrigin")
-  destination Location? @relation("ShiftDestination")
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  origin      Location?   @relation("ShiftOrigin")
+  destination Location?   @relation("ShiftDestination")
 }
 
 model Trip {

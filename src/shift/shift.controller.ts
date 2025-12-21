@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpException,
-  Param,
-  Post,
-  Put,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { ShiftService } from './shift.service';
 import { CreateShiftRequestDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
