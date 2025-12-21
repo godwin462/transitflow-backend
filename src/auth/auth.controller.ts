@@ -1,10 +1,14 @@
-import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/auth/dto/create-user.dto';
 import { LoginUserDto } from 'src/auth/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Public } from './decorators/auth.decorator';
+import type {
+  AccountVerificationDto,
+  AccountVerificationEmailDto,
+} from './dto/account-verification.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -59,13 +63,14 @@ export class AuthController {
 
   @Public()
   @Post('/verify-account')
-  async verifyEmail(@Body() payload: { email: string; otp: string }) {
+  async verifyEmail(@Body() payload: AccountVerificationDto) {
     return this.authService.verifyUser(payload.email, payload.otp);
   }
 
   @Public()
-  @Post('/resend-verification-email')
-  async resendVerificationEmail(@Body() payload: { email: string }) {
+  @Post('/send-verification-email')
+  async resendVerificationEmail(@Body() payload: AccountVerificationEmailDto) {
+    // console.log('Resend verification email payload', payload);
     return this.authService.resendVerificationEmail(payload.email);
   }
 }

@@ -19,8 +19,15 @@ export class OtpService {
   async createOtp(userId: string) {
     const otp = this.generateOtp();
     const hashedOtp = bcrypt.hashSync(otp, 10);
-    const createdOtp = await this.prisma.otp.create({
-      data: {
+    const createdOtp = await this.prisma.otp.upsert({
+      where: {
+        userId,
+      },
+      update: {
+        otp: hashedOtp,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      },
+      create: {
         userId,
         otp: hashedOtp,
         expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
@@ -40,7 +47,7 @@ export class OtpService {
       throw new HttpException('Invalid otp', 400);
     }
     if (userOtp.expiresAt < new Date()) {
-      await this.deleteOtp(userId);
+      // await this.deleteOtp(userId);
       throw new HttpException('Otp expired', 400);
     }
     const isMatch = await bcrypt.compare(otp, userOtp.otp);
@@ -65,8 +72,9 @@ export class OtpService {
         userId,
       },
     });
+    console.log('User OTP', userId, userOtp);
     if (!userOtp) {
-      throw new HttpException('Invalid otp', 400);
+      return await this.createOtp(userId);
     }
     if (userOtp.retryAfter && userOtp.retryAfter < new Date()) {
       throw new HttpException(
@@ -75,12 +83,21 @@ export class OtpService {
       );
     }
     if (userOtp.attempts >= 3) {
+      const otp = this.generateOtp();
+      const hashedOtp = bcrypt.hashSync(otp, 10);
       const retryAfter = new Date(Date.now() + 60 * 15 * 1000); // 15 minutes
-      await this.prisma.otp.update({
+      await this.prisma.otp.upsert({
         where: {
           userId,
         },
-        data: {
+        update: {
+          retryAfter,
+          attempts: 0,
+        },
+        create: {
+          userId,
+          otp: hashedOtp,
+          expiresAt: userOtp.expiresAt,
           retryAfter,
           attempts: 0,
         },
@@ -90,15 +107,21 @@ export class OtpService {
         400,
       );
     }
-    return await this.prisma.otp.update({
-      where: {
-        userId,
-      },
-      data: {
-        attempts: {
-          increment: 1,
+    const otp = this.generateOtp();
+    const hashedOtp = bcrypt.hashSync(otp, 10);
+    return {
+      otp,
+      updatedOtp: await this.prisma.otp.update({
+        where: {
+          userId,
         },
-      },
-    });
+        data: {
+          otp: hashedOtp,
+          attempts: {
+            increment: 1,
+          },
+        },
+      }),
+    };
   }
 }

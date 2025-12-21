@@ -122,7 +122,7 @@ export class AuthService {
     if (user.isEmailVerified) {
       throw new BadRequestException('Email already verified');
     }
-    const { otp } = await this.otpService.createOtp(user.id);
+    const { otp } = await this.otpService.updateOtp(user.id);
     await this.emailService.sendAccountVerificationEmail(user, otp);
     return { message: 'Check your email for verification', success: true };
   }
