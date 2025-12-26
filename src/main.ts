@@ -10,16 +10,24 @@ const port = process.env.PORT ?? 8080;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
       exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        // console.log(validationErrors);
+        const children = validationErrors[0].children;
         const firstErrorMessage =
           validationErrors.length > 0 && validationErrors[0].constraints
             ? Object.values(validationErrors[0].constraints).join(', ')
-            : 'Validation failed';
+            : children
+              ? children[0].constraints?.whitelistValidation
+              : validationErrors[0].constraints?.isEnum ||
+                'Payload validation failed';
+
+        // console.log('Validation Error:', '');
         return new BadRequestException(firstErrorMessage);
       },
     }),

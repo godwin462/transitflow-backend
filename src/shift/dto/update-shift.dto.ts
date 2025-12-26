@@ -14,8 +14,8 @@ export class UpdateShiftDto {
   @IsEnum(ShiftStatus)
   @IsOptional()
   @ApiProperty({
-    description: 'Is the shift active',
-    example: true,
+    description: 'Shift status',
+    example: ShiftStatus.completed,
   })
-  isActive?: boolean;
+  status?: ShiftStatus;
 }

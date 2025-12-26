@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -62,8 +61,8 @@ export class AuthGuard implements CanActivate {
       //   throw new BadRequestException('Account not verified');
       // }
       request['user'] = user;
-    } catch (err) {
-      console.log(err);
+    } catch {
+      // console.log(err);
       throw new UnauthorizedException();
     }
     return true;

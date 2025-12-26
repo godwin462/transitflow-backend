@@ -45,27 +45,6 @@ export class CreateShiftDto {
     example: 'driverId',
   })
   driverId: string;
-
-  // @IsString()
-  // @IsNotEmpty()
-  // @ApiProperty({
-  //   description: 'Vehicle ID',
-  //   example: 'vehicleId',
-  // })
-  // vehicleId: string;
-
-  // @Transform(({ value }) => {
-  //   if (value === 'true') return true;
-  //   if (value === 'false') return false;
-  //   return value as boolean;
-  // })
-  // @IsBoolean()
-  // @IsNotEmpty()
-  // @ApiProperty({
-  //   description: 'Is the trip active',
-  //   example: true,
-  // })
-  // isActive: boolean;
 }
 
 export class CreateLocationDto {
