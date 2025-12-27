@@ -40,7 +40,7 @@ export class VehicleController {
   }
 
   @Get()
-  @Public()
+  // @Public()
   async getVehicles() {
     return {
       message: 'Vehicles successfully retrieved',
@@ -50,7 +50,7 @@ export class VehicleController {
   }
 
   @Get('user/:id')
-  @Public()
+  // @Public()
   async getVehiclesByUserId(@Param('id') id: string) {
     return {
       message: 'Vehicles successfully retrieved',
@@ -60,7 +60,7 @@ export class VehicleController {
   }
 
   @Get('driver/:id')
-  @Public()
+  // @Public()
   async getVehicleByUserId(@Param('id') id: string) {
     return {
       message: 'Vehicle successfully retrieved',
@@ -70,7 +70,7 @@ export class VehicleController {
   }
 
   @Get(':id')
-  @Public()
+  // @Public()
   async getVehicleById(@Param('id') id: string) {
     return {
       message: 'Vehicle successfully retrieved',

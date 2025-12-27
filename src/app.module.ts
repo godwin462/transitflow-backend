@@ -19,6 +19,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { ShiftModule } from './shift/shift.module';
 import { EmailService } from './email/email.service';
 import { OtpService } from './otp/otp.service';
+import { HistoryModule } from './history/history.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { OtpService } from './otp/otp.service';
     VehicleModule,
     CloudinaryModule,
     ShiftModule,
+    HistoryModule,
   ],
   controllers: [AppController, VehicleController],
   providers: [

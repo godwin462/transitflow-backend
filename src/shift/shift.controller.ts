@@ -10,7 +10,7 @@ export class ShiftController {
 
   @Post()
   async createShift(@Body() payload: CreateShiftRequestDto) {
-    console.log(payload);
+    // console.log(payload);
     return {
       message: 'Shift creates successfully',
       success: true,

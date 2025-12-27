@@ -80,4 +80,12 @@ export class ShiftQueryDto {
     example: 'vehicleId',
   })
   vehicleId?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'Filter shifts to include vehicle details',
+    example: 'vehicleId',
+  })
+  vehicle?: string;
 }
