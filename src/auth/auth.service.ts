@@ -33,7 +33,7 @@ export class AuthService {
     });
     const existingUserName = await this.prisma.user.findUnique({
       where: {
-        username: payload.username,
+        username: payload.username.toLowerCase(),
       },
       include: {
         roles: true,
@@ -41,9 +41,7 @@ export class AuthService {
     });
     if (existingUserMail) {
       if (existingUserMail.roles.some((roleItem) => roleItem.role === role)) {
-        throw new BadRequestException(
-          'User already exists, please login to continue or create a new account',
-        );
+        throw new BadRequestException('User already exists');
       }
       await this.prisma.userRole.create({
         data: {
@@ -56,13 +54,15 @@ export class AuthService {
         existingUserMail,
         otp,
       );
-      return { message: 'Account created successfully', success: true };
+      return {
+        message: 'Check your email for verification',
+        success: true,
+        data: existingUserMail,
+      };
     }
     if (existingUserName) {
       if (existingUserName.roles.some((roleItem) => roleItem.role === role)) {
-        throw new BadRequestException(
-          'User already exists, please login to continue or create a new account',
-        );
+        throw new BadRequestException('User already exists');
       }
       await this.prisma.userRole.create({
         data: {
@@ -81,7 +81,11 @@ export class AuthService {
           password,
         },
       });
-      return { message: 'Check your email for verification', success: true };
+      return {
+        message: 'Check your email for verification',
+        success: true,
+        data: existingUserName,
+      };
     }
 
     const salt = await bcrypt.genSalt();
@@ -90,8 +94,7 @@ export class AuthService {
     const newUser = await this.prisma.user.create({
       data: {
         email: payload.email,
-        username:
-          payload.username.charAt(0).toUpperCase() + payload.username.slice(1),
+        username: payload.username?.toLowerCase(),
         roles: {
           create: [{ role }],
         },
@@ -107,7 +110,11 @@ export class AuthService {
 
     const { otp } = await this.otpService.createOtp(newUser.id);
     await this.emailService.sendAccountVerificationEmail(newUser, otp);
-    return { message: 'Check your email for verification', success: true };
+    return {
+      message: 'Check your email for verification',
+      success: true,
+      data: newUser,
+    };
   }
 
   async resendVerificationEmail(userEmail: string) {

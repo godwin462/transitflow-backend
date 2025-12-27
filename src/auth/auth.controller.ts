@@ -5,7 +5,7 @@ import { CreateUserDto } from 'src/auth/dto/create-user.dto';
 import { LoginUserDto } from 'src/auth/dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Public } from './decorators/auth.decorator';
-import type {
+import {
   AccountVerificationDto,
   AccountVerificationEmailDto,
 } from './dto/account-verification.dto';
@@ -38,7 +38,7 @@ export class AuthController {
   @Public()
   @Post('/refresh-token')
   async refreshToken(@Body() payload: RefreshTokenDto) {
-    console.log('Refresh token payload', payload);
+    // console.log('Refresh token payload', payload);
     return {
       message: 'Token refreshed successfully',
       success: true,
