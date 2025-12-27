@@ -12,10 +12,10 @@ export class ShiftQueryDto {
   @IsOptional()
   @IsBoolean()
   @ApiProperty({
-    description: 'Filter shifts by active status',
-    example: ShiftStatus.active,
+    description: 'Filter shifts by online status',
+    example: ShiftStatus.online,
   })
-  active?: boolean;
+  online?: boolean;
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
@@ -24,10 +24,10 @@ export class ShiftQueryDto {
   @IsOptional()
   @IsBoolean()
   @ApiProperty({
-    description: 'Filter shifts by on_break status',
-    example: ShiftStatus.active,
+    description: 'Filter shifts by offline status',
+    example: ShiftStatus.online,
   })
-  on_break?: boolean;
+  offline?: boolean;
 
   @Transform(({ value }) => {
     if (value === 'true') return true;
@@ -38,7 +38,7 @@ export class ShiftQueryDto {
   @IsBoolean()
   @ApiProperty({
     description: 'Include origin location details',
-    example: ShiftStatus.active,
+    example: ShiftStatus.online,
   })
   origin?: boolean;
 
@@ -51,7 +51,7 @@ export class ShiftQueryDto {
   @IsBoolean()
   @ApiProperty({
     description: 'Include destination location details',
-    example: ShiftStatus.active,
+    example: ShiftStatus.online,
   })
   destination?: boolean;
 

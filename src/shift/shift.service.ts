@@ -17,8 +17,8 @@ export class ShiftService {
       where: {
         id,
         OR: [
-          { status: query.active ? 'active' : undefined },
-          { status: query.on_break ? 'on_break' : undefined },
+          { status: query.online ? 'online' : undefined },
+          { status: query.offline ? 'offline' : undefined },
         ],
       },
       include: {
@@ -61,11 +61,11 @@ export class ShiftService {
           OR: [
             {
               driverId,
-              status: 'active',
+              status: 'online',
             },
             {
               driverId,
-              status: 'on_break',
+              status: 'offline',
             },
           ],
         },
@@ -129,8 +129,8 @@ export class ShiftService {
       where: {
         driverId,
         OR: [
-          { status: query.active ? 'active' : undefined },
-          { status: query.on_break ? 'on_break' : undefined },
+          { status: query.online ? 'online' : undefined },
+          { status: query.offline ? 'offline' : undefined },
         ],
       },
       include: {
@@ -149,8 +149,8 @@ export class ShiftService {
       where: {
         driverId,
         OR: [
-          { status: query.active ? 'active' : undefined },
-          { status: query.on_break ? 'on_break' : undefined },
+          { status: query.online ? 'online' : undefined },
+          { status: query.offline ? 'offline' : undefined },
         ],
       },
       include: {

@@ -15,7 +15,7 @@ export class UpdateShiftDto {
   @IsOptional()
   @ApiProperty({
     description: 'Shift status',
-    example: ShiftStatus.completed,
+    example: ShiftStatus.online,
   })
   status?: ShiftStatus;
 }

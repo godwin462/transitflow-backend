@@ -11,7 +11,7 @@ export class HistoryService {
       where: {
         driverId,
         // NOT: { OR: [{ status: 'active' }, { status: 'on_break' }] },
-        status: { notIn: ['active', 'on_break'] },
+        status: { notIn: ['online', 'offline'] },
       },
       include: {
         origin: query.origin ? true : false,

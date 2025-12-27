@@ -46,16 +46,14 @@ enum VehicleSize {
 enum RideStatus {
   requested
   accepted
-  in_progress
   completed
   cancelled
 }
 
 enum ShiftStatus {
-  active
-  inactive
-  on_break
-  completed
+  online
+  offline
+  ended
   cancelled
 }
 
@@ -182,7 +180,7 @@ model Shift {
   name        String
   startTime   DateTime
   endTime     DateTime?
-  status      ShiftStatus @default(active)
+  status      ShiftStatus @default(online)
   driverId    String
   driver      User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
   vehicleId   String
