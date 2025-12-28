@@ -13,6 +13,7 @@ export class HistoryService {
         // NOT: { OR: [{ status: 'active' }, { status: 'on_break' }] },
         status: { notIn: ['online', 'offline'] },
       },
+      orderBy: { updatedAt: 'desc' },
       include: {
         origin: query.origin ? true : false,
         destination: query.destination ? true : false,
