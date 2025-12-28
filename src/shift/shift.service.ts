@@ -54,7 +54,7 @@ export class ShiftService {
         where: { userId: driverId },
       });
       if (!vehicle) {
-        throw new NotFoundException('Vehicle not found');
+        throw new NotFoundException('Registered vehicle not found for driver');
       }
       const activeShift = await this.prisma.shift.findFirst({
         where: {
