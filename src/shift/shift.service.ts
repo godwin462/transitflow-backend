@@ -13,19 +13,20 @@ export class ShiftService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getShiftById(id: string, query: ShiftQueryDto) {
-    return this.prisma.shift.findUnique({
+    // console.log(id, 'Query params: ', query);
+    const shift = await this.prisma.shift.findUnique({
       where: {
         id,
-        OR: [
-          { status: query.online ? 'online' : undefined },
-          { status: query.offline ? 'offline' : undefined },
-        ],
       },
       include: {
-        origin: true,
-        destination: true,
+        origin: query.origin ? true : false,
+        destination: query.destination ? true : false,
       },
     });
+    if (!shift) {
+      throw new NotFoundException('Shift not found');
+    }
+    return shift;
   }
 
   async getShifts() {
