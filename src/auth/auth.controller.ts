@@ -8,6 +8,7 @@ import { Public } from './decorators/auth.decorator';
 import {
   AccountVerificationDto,
   AccountVerificationEmailDto,
+  SwitchAccountDto,
 } from './dto/account-verification.dto';
 
 @Controller('auth')
@@ -54,6 +55,14 @@ export class AuthController {
       success: true,
       data: await this.userService.findUserById(req.user.id),
     };
+  }
+
+  @Post('/switch-account')
+  async switchAccount(
+    @Req() req: RequestWithUser,
+    @Body() payload: SwitchAccountDto,
+  ) {
+    return this.authService.switchAccount(req.user.id, payload);
   }
 
   @Post('/logout')

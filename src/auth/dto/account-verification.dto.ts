@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, Length } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, Length } from 'class-validator';
+import { Role } from 'generated/prisma/enums';
 
 export class AccountVerificationDto {
   @IsNotEmpty()
@@ -26,4 +27,14 @@ export class AccountVerificationEmailDto {
     example: 'user@example.com',
   })
   email: string;
+}
+
+export class SwitchAccountDto {
+  @IsNotEmpty()
+  @IsEnum(Role)
+  @ApiProperty({
+    description: 'User role to switch to',
+    example: Role.passenger,
+  })
+  role: Role;
 }

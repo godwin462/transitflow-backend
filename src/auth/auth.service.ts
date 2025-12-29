@@ -12,6 +12,7 @@ import { jwtConstants } from './constants';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/email/email.service';
 import { OtpService } from 'src/otp/otp.service';
+import type { SwitchAccountDto } from './dto/account-verification.dto';
 
 @Injectable()
 export class AuthService {
@@ -309,6 +310,55 @@ export class AuthService {
     return {
       message: 'Logged out successfully',
       success: true,
+    };
+  }
+
+  async switchAccount(userId: string, payload: SwitchAccountDto) {
+    let user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { roles: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.activeRole == payload.role) {
+      return {
+        message: `Account already in ${payload.role}`,
+        success: false,
+        data: user,
+      };
+    }
+
+    if (user.roles.some((roleItem) => roleItem.role === payload.role)) {
+      user = await this.prisma.user.update({
+        where: { id: userId },
+        data: { activeRole: payload.role },
+        include: { roles: true },
+      });
+      return {
+        message: 'Account switched successfully',
+        success: true,
+        data: user,
+      };
+    }
+
+    user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        activeRole: payload.role,
+        roles: {
+          create: {
+            role: payload.role,
+          },
+        },
+      },
+      include: { roles: true },
+    });
+    return {
+      message: 'Account switched successfully',
+      success: true,
+      data: user,
     };
   }
 }
