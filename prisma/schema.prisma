@@ -30,9 +30,14 @@ enum VehicleCategory {
   car
   truck
   motorcycle
-  bus
+  danfo
+  ferry
+  train
+  brt
   tricycle
   bike
+  suv
+  sedan
 }
 
 enum VehicleSize {
