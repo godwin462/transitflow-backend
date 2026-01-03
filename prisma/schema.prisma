@@ -1,18 +1,174 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider     = "prisma-client"
   output       = "../generated/prisma"
   moduleFormat = "cjs"
-  // previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id              String     @id @unique @default(cuid())
+  email           String     @unique
+  firstName       String?
+  lastName        String?
+  phone           String?
+  active          Boolean    @default(true)
+  activeRole      Role?
+  isEmailVerified Boolean    @default(false)
+  username        String     @unique
+  gender          Gender?
+  dob             DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  address         Address?
+  auth            Auth?
+  token           AuthToken?
+  locations       Location[]
+  otp             Otp?
+  shifts          Shift[]
+  trips           Trip[]
+  roles           UserRole[]
+  vehicle         Vehicle?
+}
+
+model Otp {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  otp        String
+  attempts   Int       @default(0)
+  retryAfter DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  role   Role
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Auth {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  isVerified Boolean @default(false)
+  password   String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuthToken {
+  id     String @id @default(cuid())
+  userId String @unique
+  token  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id     String @id @default(cuid())
+  userId String @unique
+  street String
+  city   String
+  state  String
+  zip    String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VehicleImage {
+  id        String   @id @default(cuid())
+  secureUrl String
+  publicId  String
+  vehicleId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+}
+
+model Vehicle {
+  id           String          @id @default(cuid())
+  userId       String          @unique
+  make         String
+  model        String
+  year         Int
+  color        String
+  licensePlate String          @unique
+  capacity     Int
+  size         VehicleSize
+  vin          String          @unique
+  category     VehicleCategory
+  isPublic     Boolean         @default(false)
+  isVerified   Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  shifts       Shift[]
+  trips        Trip[]
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images       VehicleImage[]
+}
+
+model Location {
+  id                 String   @id @default(cuid())
+  latitude           Float
+  longitude          Float
+  address            String
+  userId             String
+  shiftOriginId      String?  @unique
+  shiftDestinationId String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  shiftDestination   Shift?   @relation("ShiftDestination", fields: [shiftDestinationId], references: [id])
+  shiftOrigin        Shift?   @relation("ShiftOrigin", fields: [shiftOriginId], references: [id])
+  user               User     @relation(fields: [userId], references: [id])
+  tripOrigin         Trip?    @relation("TripDestination")
+  tripDestination    Trip?    @relation("TripOrigin")
+}
+
+model Shift {
+  id          String                   @id @default(cuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime?
+  status      ShiftStatus              @default(online)
+  driverId    String
+  vehicleId   String
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  route       Unsupported("geometry")?
+  destination Location?                @relation("ShiftDestination")
+  origin      Location?                @relation("ShiftOrigin")
+  driver      User                     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle                  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([route], map: "shift_route_idx", type: Gist)
+}
+
+model Trip {
+  id            String   @id @default(cuid())
+  startTime     DateTime
+  endTime       DateTime
+  name          String
+  passengerId   String
+  vehicleId     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  originId      String   @unique
+  destinationId String   @unique
+  destination   Location @relation("TripDestination", fields: [destinationId], references: [id])
+  origin        Location @relation("TripOrigin", fields: [originId], references: [id])
+  passenger     User     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
 }
 
 enum Role {
@@ -60,155 +216,4 @@ enum ShiftStatus {
   offline
   ended
   cancelled
-}
-
-model User {
-  id              String     @id @unique @default(cuid())
-  email           String     @unique
-  firstName       String?
-  lastName        String?
-  phone           String?
-  active          Boolean    @default(true)
-  activeRole      Role?
-  isEmailVerified Boolean    @default(false)
-  username        String     @unique
-  roles           UserRole[]
-  auth            Auth?
-  token           AuthToken?
-  gender          Gender?
-  address         Address?
-  dob             DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  vehicle         Vehicle?
-  shifts          Shift[]
-  trips           Trip[]
-  locations       Location[]
-  otp             Otp?
-}
-
-model Otp {
-  id         String    @id @default(cuid())
-  userId     String    @unique
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  otp        String
-  attempts   Int       @default(0)
-  retryAfter DateTime?
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-}
-
-model UserRole {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   Role
-}
-
-model Auth {
-  id         String  @id @default(cuid())
-  userId     String  @unique
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isVerified Boolean @default(false)
-  password   String
-}
-
-model AuthToken {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token  String
-}
-
-model Address {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  street String
-  city   String
-  state  String
-  zip    String
-}
-
-model VehicleImage {
-  id        String   @id @default(cuid())
-  secureUrl String
-  publicId  String
-  vehicleId String
-  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Vehicle {
-  id           String          @id @default(cuid())
-  userId       String          @unique
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images       VehicleImage[]
-  make         String
-  model        String
-  year         Int
-  color        String
-  licensePlate String          @unique
-  capacity     Int
-  size         VehicleSize
-  vin          String          @unique
-  category     VehicleCategory
-  isPublic     Boolean         @default(false)
-  isVerified   Boolean         @default(false)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  shifts       Shift[]
-  trips        Trip[]
-}
-
-model Location {
-  id                 String   @id @default(cuid())
-  latitude           Float
-  longitude          Float
-  address            String
-  userId             String
-  user               User     @relation(fields: [userId], references: [id])
-  shiftOriginId      String?  @unique
-  shiftOrigin        Shift?   @relation("ShiftOrigin", fields: [shiftOriginId], references: [id])
-  shiftDestinationId String?  @unique
-  shiftDestination   Shift?   @relation("ShiftDestination", fields: [shiftDestinationId], references: [id])
-  tripOrigin         Trip?    @relation("TripDestination")
-  tripDestination    Trip?    @relation("TripOrigin")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-}
-
-model Shift {
-  id          String      @id @default(cuid())
-  name        String
-  startTime   DateTime
-  endTime     DateTime?
-  status      ShiftStatus @default(online)
-  driverId    String
-  driver      User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  vehicleId   String
-  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  origin      Location?   @relation("ShiftOrigin")
-  destination Location?   @relation("ShiftDestination")
-}
-
-model Trip {
-  id            String   @id @default(cuid())
-  startTime     DateTime
-  endTime       DateTime
-  name          String
-  passengerId   String
-  passenger     User     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  vehicleId     String
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  originId      String   @unique
-  origin        Location @relation("TripOrigin", fields: [originId], references: [id])
-  destinationId String   @unique
-  destination   Location @relation("TripDestination", fields: [destinationId], references: [id])
 }
