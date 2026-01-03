@@ -13,7 +13,6 @@ import { VehicleService } from './vehicle.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { Role } from 'generated/prisma/enums';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Public } from 'src/auth/decorators/auth.decorator';
 import { imageUploadOptions } from 'src/common/image-upload/image-upload-options';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileSizeValidationPipe } from 'src/common/image-upload/size-validation';

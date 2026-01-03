@@ -24,7 +24,7 @@ export class AuthService {
   ) {}
 
   async createUser(payload: CreateUserDto, role: Role, password: string) {
-    const existingUserMail = await this.prisma.user.findUnique({
+    const existingUserMail = await this.prisma.user.findFirst({
       where: {
         email: payload.email,
       },
@@ -32,6 +32,11 @@ export class AuthService {
         roles: true,
       },
     });
+    if (existingUserMail) {
+      if (existingUserMail.roles.some((roleItem) => roleItem.role === role)) {
+        throw new BadRequestException('User already exists');
+      }
+    }
     const existingUserName = await this.prisma.user.findUnique({
       where: {
         username: payload.username.toLowerCase(),
@@ -199,11 +204,18 @@ export class AuthService {
     if (!verifyToken) {
       throw new BadRequestException('Invalid token');
     }
-    await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: { isEmailVerified: true },
+      include: {
+        roles: true,
+      },
     });
-    return { message: 'Account verified successfully', success: true };
+    return {
+      message: 'Account verified successfully',
+      success: true,
+      data: updatedUser,
+    };
   }
 
   async generateRefreshToken(userId: string, role: string) {

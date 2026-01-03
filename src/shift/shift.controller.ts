@@ -3,6 +3,7 @@ import { ShiftService } from './shift.service';
 import { CreateShiftRequestDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { ShiftQueryDto } from './dto/shift-query.dto';
+import { Public } from 'src/auth/decorators/auth.decorator';
 
 @Controller('shift')
 export class ShiftController {
@@ -10,7 +11,7 @@ export class ShiftController {
 
   @Post()
   async createShift(@Body() payload: CreateShiftRequestDto) {
-    // console.log(payload);
+    console.log('Shift creation Payload:', payload);
     return {
       message: 'Shift creates successfully',
       success: true,
@@ -19,6 +20,7 @@ export class ShiftController {
         payload.shift,
         payload.origin,
         payload.destination,
+        payload.route,
       ),
     };
   }
@@ -37,6 +39,7 @@ export class ShiftController {
   }
 
   @Get()
+  @Public()
   async getShifts() {
     return {
       message: 'Shifts fetched successfully',

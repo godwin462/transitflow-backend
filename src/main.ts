@@ -5,6 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
+import { json, urlencoded } from 'express';
 
 const port = process.env.PORT ?? 8080;
 
@@ -12,6 +13,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -27,7 +30,7 @@ async function bootstrap() {
               : validationErrors[0].constraints?.isEnum ||
                 'Payload validation failed';
 
-        // console.log('Validation Error:', '');
+        console.log('Validation Error:', children && children[0]);
         return new BadRequestException(firstErrorMessage);
       },
     }),

@@ -72,11 +72,13 @@ export class OtpService {
         userId,
       },
     });
-    console.log('User OTP', userId, userOtp);
     if (!userOtp) {
       return await this.createOtp(userId);
     }
-    if (userOtp.retryAfter && userOtp.retryAfter < new Date()) {
+    if (userOtp.retryAfter && userOtp.retryAfter > new Date()) {
+      console.log(
+        `You can try again after ${userOtp.retryAfter.toLocaleString()}, current time ${new Date().toLocaleString()}`,
+      );
       throw new HttpException(
         `You can try again after ${userOtp.retryAfter.toLocaleString()}`,
         400,
@@ -97,7 +99,7 @@ export class OtpService {
         create: {
           userId,
           otp: hashedOtp,
-          expiresAt: userOtp.expiresAt,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
           retryAfter,
           attempts: 0,
         },
@@ -117,6 +119,7 @@ export class OtpService {
         },
         data: {
           otp: hashedOtp,
+          expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
           attempts: {
             increment: 1,
           },

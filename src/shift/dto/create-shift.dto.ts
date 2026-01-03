@@ -7,6 +7,9 @@ import {
   IsNumber,
   ValidateNested,
   IsNotEmpty,
+  Min,
+  Max,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -45,6 +48,14 @@ export class CreateShiftDto {
     example: 'driverId',
   })
   driverId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Driver ID',
+    example: 'driverId',
+  })
+  vehicleId: string;
 }
 
 export class CreateLocationDto {
@@ -75,6 +86,26 @@ export class CreateLocationDto {
   address: string;
 }
 
+export class LatLngDto {
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  @ApiProperty({
+    description: 'Latitude',
+    example: 37.7749,
+  })
+  latitude: number;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  @ApiProperty({
+    description: 'Longitude',
+    example: -122.4194,
+  })
+  longitude: number;
+}
+
 export class CreateShiftRequestDto {
   @ValidateNested()
   @Type(() => CreateShiftDto)
@@ -93,4 +124,13 @@ export class CreateShiftRequestDto {
   @IsNotEmpty()
   @ApiProperty()
   destination: CreateLocationDto;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LatLngDto)
+  @ApiProperty({
+    description: 'Decoded Polyline string',
+    example: 'Trip route from origin to destination',
+  })
+  route: LatLngDto[];
 }

@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsDate,
+  IsEnum,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { ShiftStatus } from 'generated/prisma/enums';
+import { LatLngDto } from './create-shift.dto';
 
 export class UpdateShiftDto {
   @IsDate()
@@ -18,4 +27,14 @@ export class UpdateShiftDto {
     example: ShiftStatus.online,
   })
   status?: ShiftStatus;
+
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => LatLngDto)
+  @ApiProperty({
+    description: 'Decoded Polyline string',
+    example: 'Trip route from origin to destination',
+  })
+  route?: LatLngDto[];
 }

@@ -1,15 +1,14 @@
 import {
   ArgumentsHost,
   Catch,
-  // ExceptionFilter,
+  ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import { BaseExceptionFilter } from '@nestjs/core';
 import { Response } from 'express';
 import { Prisma } from 'generated/prisma/client';
 
 @Catch(Prisma.PrismaClientKnownRequestError)
-export class PrismaClientExceptionFilter extends BaseExceptionFilter {
+export class PrismaClientExceptionFilter implements ExceptionFilter {
   catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -65,9 +64,15 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
         break;
       }
       default:
-        console.log(exception.code);
-        // default 500 server error
-        super.catch(exception, host);
+        console.error(
+          'Unhandled Prisma Error:',
+          exception.code,
+          exception.message,
+        ); // default 500 server error
+        return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: 'Internal server error during database operation',
+        });
         break;
     }
   }

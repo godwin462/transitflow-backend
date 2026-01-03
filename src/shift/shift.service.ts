@@ -3,10 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateLocationDto, CreateShiftDto } from './dto/create-shift.dto';
+import {
+  CreateLocationDto,
+  CreateShiftDto,
+  LatLngDto,
+} from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type { ShiftQueryDto } from './dto/shift-query.dto';
+import { ShiftQueryDto } from './dto/shift-query.dto';
 
 @Injectable()
 export class ShiftService {
@@ -30,12 +34,12 @@ export class ShiftService {
   }
 
   async getShifts() {
-    return this.prisma.shift.findMany({
-      include: {
-        origin: true,
-        destination: true,
-      },
-    });
+    return this.prisma.$queryRaw`
+    SELECT
+      *,
+      ST_AsGeoJSON(route)::json as route
+    FROM "Shift"
+  `;
   }
 
   async createShift(
@@ -43,6 +47,7 @@ export class ShiftService {
     shiftPayload: CreateShiftDto,
     originPayload: CreateLocationDto,
     destinationPayload: CreateLocationDto,
+    polyline: LatLngDto[],
   ) {
     try {
       const driver = await this.prisma.user.findUnique({
@@ -80,7 +85,7 @@ export class ShiftService {
         data: {
           ...shiftPayload,
           vehicleId: vehicle.id,
-          // driverId,
+          driverId,
           origin: {
             create: { ...originPayload, userId: driverId },
           },
@@ -89,6 +94,12 @@ export class ShiftService {
           },
         },
       });
+      await this.prisma.$executeRaw`
+  UPDATE "Shift"
+  SET route = ST_LineFromEncodedPolyline(${polyline})
+
+  WHERE id = ${shift.id}
+`;
       return shift;
     } catch (error) {
       console.log('Create shift error: ', error);
@@ -118,6 +129,15 @@ export class ShiftService {
           destination: query.destination,
         },
       });
+      if (payload.route) {
+        await this.prisma.$executeRaw`
+  UPDATE "Shift"
+  SET route = ST_LineFromEncodedPolyline(${payload.route})
+
+  WHERE id = ${shift.id}
+`;
+      }
+
       return shift;
     } catch (error) {
       console.log('Update shift error: ', error);
