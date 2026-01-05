@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Query, Req } from '@nestjs/common';
 import { HistoryService } from './history.service';
 import { ShiftQueryDto } from 'src/shift/dto/shift-query.dto';
 
@@ -6,15 +6,30 @@ import { ShiftQueryDto } from 'src/shift/dto/shift-query.dto';
 export class HistoryController {
   constructor(private readonly historyService: HistoryService) {}
 
-  @Get('driver/shift/:driverId')
+  @Get('driver/shifts/')
   async getDriverShiftsHistory(
-    @Param('driverId') shiftId: string,
+    @Req() req: RequestWithUser,
     @Query() query: ShiftQueryDto,
   ) {
     return {
       message: 'Shift fetched successfully',
       success: true,
-      data: await this.historyService.getDriverShiftHistory(shiftId, query),
+      data: await this.historyService.getDriverShiftHistory(req.user.id, query),
+    };
+  }
+
+  @Get('passenger/trips/')
+  async getPassengerTripHistory(
+    @Req() req: RequestWithUser,
+    @Query() query: ShiftQueryDto,
+  ) {
+    return {
+      message: 'Trip fetched successfully',
+      success: true,
+      data: await this.historyService.getPassengerTripHistory(
+        req.user.id,
+        query,
+      ),
     };
   }
 }

@@ -30,7 +30,7 @@ async function bootstrap() {
               : validationErrors[0].constraints?.isEnum ||
                 'Payload validation failed';
 
-        console.log('Validation Error:', children && children[0]);
+        // console.log('Validation Error:', children && children[0].children);
         return new BadRequestException(firstErrorMessage);
       },
     }),

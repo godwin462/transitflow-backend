@@ -20,6 +20,7 @@ import { ShiftModule } from './shift/shift.module';
 import { EmailService } from './email/email.service';
 import { OtpService } from './otp/otp.service';
 import { HistoryModule } from './history/history.module';
+import { TripModule } from './trip/trip.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { HistoryModule } from './history/history.module';
     CloudinaryModule,
     ShiftModule,
     HistoryModule,
+    TripModule,
   ],
   controllers: [AppController, VehicleController],
   providers: [

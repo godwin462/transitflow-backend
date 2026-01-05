@@ -57,9 +57,7 @@ export class AuthGuard implements CanActivate {
           roles: true,
         },
       });
-      // if (!user.isEmailVerified) {
-      //   throw new BadRequestException('Account not verified');
-      // }
+      if (!user) return false;
       request['user'] = user;
     } catch {
       // console.log(err);

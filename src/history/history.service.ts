@@ -22,4 +22,20 @@ export class HistoryService {
     });
     return history;
   }
+
+  async getPassengerTripHistory(passengerId: string, query: ShiftQueryDto) {
+    const history = await this.prisma.trip.findMany({
+      where: {
+        passengerId,
+        status: { notIn: ['pending', 'active', 'started'] },
+      },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        origin: query.origin ? true : false,
+        destination: query.destination ? true : false,
+        vehicle: query.vehicle ? true : false,
+      },
+    });
+    return history;
+  }
 }

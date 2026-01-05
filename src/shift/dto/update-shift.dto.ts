@@ -5,7 +5,6 @@ import {
   IsDate,
   IsEnum,
   IsOptional,
-  IsString,
   ValidateNested,
 } from 'class-validator';
 import { ShiftStatus } from 'generated/prisma/enums';

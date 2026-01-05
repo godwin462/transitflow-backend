@@ -117,13 +117,15 @@ model Location {
   userId             String
   shiftOriginId      String?  @unique
   shiftDestinationId String?  @unique
+  tripOriginId       String?  @unique
+  tripDestinationId  String?  @unique
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   shiftDestination   Shift?   @relation("ShiftDestination", fields: [shiftDestinationId], references: [id])
   shiftOrigin        Shift?   @relation("ShiftOrigin", fields: [shiftOriginId], references: [id])
+  tripDestination    Trip?    @relation("TripDestination", fields: [tripDestinationId], references: [id])
+  tripOrigin         Trip?    @relation("TripOrigin", fields: [tripOriginId], references: [id])
   user               User     @relation(fields: [userId], references: [id])
-  tripOrigin         Trip?    @relation("TripDestination")
-  tripDestination    Trip?    @relation("TripOrigin")
 }
 
 model Shift {
@@ -146,20 +148,24 @@ model Shift {
 }
 
 model Trip {
-  id            String   @id @default(cuid())
-  startTime     DateTime
-  endTime       DateTime
-  name          String
-  passengerId   String
-  vehicleId     String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  originId      String   @unique
-  destinationId String   @unique
-  destination   Location @relation("TripDestination", fields: [destinationId], references: [id])
-  origin        Location @relation("TripOrigin", fields: [originId], references: [id])
-  passenger     User     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id          String                   @id @default(cuid())
+  startTime   DateTime
+  endTime     DateTime?
+  name        String
+  passengerId String
+  mode        TransportMode            @default(public)
+  status      TripStatus               @default(pending)
+  vehicleId   String?
+  createdAt   DateTime                 @default(now())
+  vehicleType VehicleCategory?
+  updatedAt   DateTime                 @updatedAt
+  route       Unsupported("geometry")?
+  destination Location?                @relation("TripDestination")
+  origin      Location?                @relation("TripOrigin")
+  passenger   User                     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle?                 @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([route], map: "trip_route_idx", type: Gist)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -215,5 +221,18 @@ enum ShiftStatus {
   online
   offline
   ended
+  cancelled
+}
+
+enum TransportMode {
+  public
+  private
+}
+
+enum TripStatus {
+  pending
+  active
+  started
+  completed // trip
   cancelled
 }

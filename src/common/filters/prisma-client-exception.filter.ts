@@ -54,7 +54,7 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
       }
       case 'P1017': {
         // database not connection unsuccessful
-        console.log(exception.meta);
+        // console.log(exception.meta);
         const status = HttpStatus.BAD_REQUEST;
         response.status(status).json({
           statusCode: status,
@@ -64,11 +64,11 @@ export class PrismaClientExceptionFilter implements ExceptionFilter {
         break;
       }
       default:
-        console.error(
-          'Unhandled Prisma Error:',
-          exception.code,
-          exception.message,
-        ); // default 500 server error
+        // console.error(
+        //   'Unhandled Prisma Error:',
+        //   exception.code,
+        //   exception.message,
+        // ); // default 500 server error
         return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
           message: 'Internal server error during database operation',

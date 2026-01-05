@@ -39,7 +39,6 @@ export class AuthController {
   @Public()
   @Post('/refresh-token')
   async refreshToken(@Body() payload: RefreshTokenDto) {
-    // console.log('Refresh token payload', payload);
     return {
       message: 'Token refreshed successfully',
       success: true,
@@ -49,7 +48,6 @@ export class AuthController {
 
   @Get('/me')
   async me(@Req() req: RequestWithUser) {
-    // console.log('Getting current auth user payload', req.user);
     return {
       message: 'User fetched successfully',
       success: true,
