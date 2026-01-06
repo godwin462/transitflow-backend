@@ -15,8 +15,7 @@ export class PrismaService
     const pool = new Pool({
       connectionString,
       ssl: {
-        rejectUnauthorized: false, // Bypasses strict CA verification
-        ca: fs.readFileSync(path.join(process.cwd(), 'ca.pem')).toString(),
+        rejectUnauthorized: false,
       },
     });
     const adapter = new PrismaPg(pool);
