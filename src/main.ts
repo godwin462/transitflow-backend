@@ -1,16 +1,21 @@
 import 'dotenv/config';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, PartialGraphHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
+import { createValidationErrorResponse } from './common/helpers/validation-error.helper';
 import { json, urlencoded } from 'express';
+import fs from 'fs';
 
 const port = process.env.PORT ?? 8080;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    snapshot: true,
+    abortOnError: false,
+  });
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
   app.use(json({ limit: '50mb' }));
@@ -20,18 +25,16 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       exceptionFactory: (validationErrors: ValidationError[] = []) => {
-        // console.log(validationErrors);
-        const children = validationErrors[0].children;
-        const firstErrorMessage =
-          validationErrors.length > 0 && validationErrors[0].constraints
-            ? Object.values(validationErrors[0].constraints).join(', ')
-            : children
-              ? children[0].constraints?.whitelistValidation
-              : validationErrors[0].constraints?.isEnum ||
-                'Payload validation failed';
+        // Log the full validation errors for debugging
+        console.log(
+          'Validation Errors:',
+          JSON.stringify(validationErrors, null, 2),
+        );
 
-        // console.log('Validation Error:', children && children[0].children);
-        return new BadRequestException(firstErrorMessage);
+        // Use the helper to extract all errors with full property paths
+        const errorResponse = createValidationErrorResponse(validationErrors);
+
+        return new BadRequestException(errorResponse);
       },
     }),
   );
@@ -49,4 +52,7 @@ async function bootstrap() {
 }
 bootstrap()
   .then(() => console.log(`Server running at http://localhost:${port}`))
-  .catch((err) => console.error(err));
+  .catch((err) => {
+    fs.writeFileSync('graph.json', PartialGraphHost.toString() ?? '');
+    process.exit(1);
+  });

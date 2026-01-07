@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ShiftStatus } from 'generated/prisma/enums';
-import { LatLngDto } from './create-shift.dto';
+import { CreateRouteDto } from './create-shift.dto';
 
 export class UpdateShiftDto {
   @IsDate()
@@ -27,13 +27,9 @@ export class UpdateShiftDto {
   })
   status?: ShiftStatus;
 
-  @IsArray()
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => LatLngDto)
-  @ApiProperty({
-    description: 'Decoded Polyline string',
-    example: 'Trip route from origin to destination',
-  })
-  route?: LatLngDto[];
+  @ValidateNested()
+  @Type(() => CreateRouteDto)
+  @ApiProperty()
+  route?: CreateRouteDto;
 }

@@ -14,7 +14,8 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TransportMode } from 'generated/prisma/enums';
+import { TransportMode, VehicleCategory } from 'generated/prisma/enums';
+import { LatLngDto } from 'src/shift/dto/create-shift.dto';
 
 export class CreateTripDto {
   @IsString()
@@ -26,28 +27,10 @@ export class CreateTripDto {
   })
   name: string;
 
-  @Transform(({ value }) => new Date(value))
-  @IsDate()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'Trip start time',
-    example: '2022-01-01T00:00:00.000Z',
-  })
-  startTime: Date;
-
-  @IsOptional()
-  @Transform(({ value }) => new Date(value))
-  @IsDate()
-  @ApiProperty({
-    description: 'Trip end time',
-    example: '2022-01-01T00:00:00.000Z',
-  })
-  endTime?: Date;
-
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: 'Driver ID',
+    description: 'Passenger ID',
     example: 'passengerId',
   })
   passengerId: string;
@@ -55,10 +38,40 @@ export class CreateTripDto {
   @IsEnum(TransportMode)
   @IsNotEmpty()
   @ApiProperty({
-    description: 'Transport mode',
-    example: 'public',
+    description: 'Passenger ID',
+    example: 'passengerId',
   })
   mode: TransportMode;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Vehicle ID',
+    example: 'vehicleId',
+  })
+  originPoint: LatLngDto;
+
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Vehicle ID',
+    example: 'vehicleId',
+  })
+  destinationPoint: LatLngDto;
+
+  @IsEnum(VehicleCategory)
+  @IsOptional()
+  @ApiProperty({
+    description: 'Vehicle category',
+    example: 'car',
+  })
+  vehicleType?: VehicleCategory;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    description: 'Vehicle category',
+    example: 'car',
+  })
+  maxWalMeters?: number;
 }
 
 export class CreateLocationDto {
@@ -87,26 +100,14 @@ export class CreateLocationDto {
     example: '123 Main St',
   })
   address: string;
-}
-
-export class LatLngDto {
-  @IsNumber()
-  @Min(-90)
-  @Max(90)
-  @ApiProperty({
-    description: 'Latitude',
-    example: 37.7749,
-  })
-  latitude: number;
 
   @IsNumber()
-  @Min(-180)
-  @Max(180)
+  @IsNotEmpty()
   @ApiProperty({
-    description: 'Longitude',
-    example: -122.4194,
+    description: 'Maximum walk distance in meters',
+    example: 1000,
   })
-  longitude: number;
+  maxWalkMeters: number;
 }
 
 export class CreateTripRequestDto {
@@ -132,7 +133,7 @@ export class CreateTripRequestDto {
   @ValidateNested({ each: true })
   @Type(() => LatLngDto)
   @ApiProperty({
-    description: 'Decoded Polyline string',
+    description: 'Decoded origin to destination Polyline string',
     example: 'Trip route from origin to destination',
   })
   route: LatLngDto[];

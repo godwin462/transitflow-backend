@@ -21,7 +21,10 @@ export class TripController {
 
   @Roles('passenger')
   @Post()
-  async createTrip(@Body() payload: CreateTripRequestDto) {
+  async createTrip(
+    @Body() payload: CreateTripRequestDto,
+    @Query() query: TripQueryDto,
+  ) {
     return {
       message: 'Trip creates successfully',
       success: true,
@@ -30,7 +33,7 @@ export class TripController {
         payload.trip,
         payload.origin,
         payload.destination,
-        payload.route,
+        query,
       ),
     };
   }

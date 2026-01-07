@@ -110,62 +110,98 @@ model Vehicle {
 }
 
 model Location {
-  id                 String   @id @default(cuid())
-  latitude           Float
-  longitude          Float
-  address            String
-  userId             String
-  shiftOriginId      String?  @unique
-  shiftDestinationId String?  @unique
-  tripOriginId       String?  @unique
-  tripDestinationId  String?  @unique
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  shiftDestination   Shift?   @relation("ShiftDestination", fields: [shiftDestinationId], references: [id])
-  shiftOrigin        Shift?   @relation("ShiftOrigin", fields: [shiftOriginId], references: [id])
-  tripDestination    Trip?    @relation("TripDestination", fields: [tripDestinationId], references: [id])
-  tripOrigin         Trip?    @relation("TripOrigin", fields: [tripOriginId], references: [id])
-  user               User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  latitude  Float
+  longitude Float
+  address   String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Route {
+  id           String                  @id @default(cuid())
+  name         String?
+  geometry     Unsupported("geometry") // LineString
+  lengthMeters Float
+  createdAt    DateTime                @default(now())
+
+  shifts Shift[]
+
+  @@index([geometry], type: Gist)
 }
 
 model Shift {
-  id          String                   @id @default(cuid())
-  name        String
-  startTime   DateTime
-  endTime     DateTime?
-  status      ShiftStatus              @default(online)
-  driverId    String
-  vehicleId   String
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  route       Unsupported("geometry")?
-  destination Location?                @relation("ShiftDestination")
-  origin      Location?                @relation("ShiftOrigin")
-  driver      User                     @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  vehicle     Vehicle                  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  @@index([route], map: "shift_route_idx", type: Gist)
+  id        String      @id @default(cuid())
+  name      String
+  startTime DateTime
+  endTime   DateTime?
+  status    ShiftStatus @default(online)
+  driverId  String
+  vehicleId String
+  routeId   String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  driver    User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  route     Route       @relation(fields: [routeId], references: [id])
+  matches   RideMatch[]
 }
 
 model Trip {
-  id          String                   @id @default(cuid())
-  startTime   DateTime
-  endTime     DateTime?
-  name        String
-  passengerId String
-  mode        TransportMode            @default(public)
-  status      TripStatus               @default(pending)
-  vehicleId   String?
-  createdAt   DateTime                 @default(now())
-  vehicleType VehicleCategory?
-  updatedAt   DateTime                 @updatedAt
-  route       Unsupported("geometry")?
-  destination Location?                @relation("TripDestination")
-  origin      Location?                @relation("TripOrigin")
-  passenger   User                     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  vehicle     Vehicle?                 @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id               String                  @id @default(cuid())
+  name             String
+  passengerId      String
+  mode             TransportMode           @default(public)
+  status           TripStatus              @default(pending)
+  vehicleId        String?
+  createdAt        DateTime                @default(now())
+  vehicleType      VehicleCategory?
+  updatedAt        DateTime                @updatedAt
+  originPoint      Unsupported("geometry") // Point
+  destinationPoint Unsupported("geometry") // Point
 
-  @@index([route], map: "trip_route_idx", type: Gist)
+  maxWalkMeters Float
+  earliestStart DateTime?
+  latestStart   DateTime?
+  matches       RideMatch[]
+
+  passenger User     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([originPoint], type: Gist)
+  @@index([destinationPoint], type: Gist)
+}
+
+model RideMatch {
+  id String @id @default(cuid())
+
+  tripId  String
+  shiftId String
+
+  pickupPoint  Unsupported("geometry") // Point on route
+  dropoffPoint Unsupported("geometry") // Point on route
+
+  pickupFraction  Float // 0.0 → 1.0
+  dropoffFraction Float
+
+  pickupWalkMeters  Float
+  dropoffWalkMeters Float
+
+  estimatedPickupTime  DateTime
+  estimatedDropoffTime DateTime
+
+  status RideMatchStatus @default(proposed)
+  score  Float
+
+  createdAt DateTime @default(now())
+
+  trip  Trip  @relation(fields: [tripId], references: [id])
+  shift Shift @relation(fields: [shiftId], references: [id])
+
+  @@index([pickupPoint], type: Gist)
+  @@index([shiftId, status])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -230,9 +266,18 @@ enum TransportMode {
 }
 
 enum TripStatus {
+  searching
+  matched
+  accepted
   pending
-  active
   started
   completed // trip
+  cancelled
+}
+
+enum RideMatchStatus {
+  proposed
+  accepted
+  declined
   cancelled
 }

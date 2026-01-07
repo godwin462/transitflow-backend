@@ -52,10 +52,18 @@ export class CreateShiftDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
-    description: 'Driver ID',
-    example: 'driverId',
+    description: 'Vehicle ID',
+    example: 'vehicleId',
   })
   vehicleId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Route ID',
+    example: 'routeId',
+  })
+  routeId: string;
 }
 
 export class CreateLocationDto {
@@ -86,6 +94,33 @@ export class CreateLocationDto {
   address: string;
 }
 
+export class CreateRouteDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Route name',
+    example: 'Main Route',
+  })
+  name: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LatLngDto)
+  @ApiProperty({
+    description: 'Decoded Polyline string',
+    example: 'Trip route from origin to destination',
+  })
+  geometry: LatLngDto[];
+
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Length of the route in meters',
+    example: 12345,
+  })
+  lengthMeters: number;
+}
+
 export class LatLngDto {
   @IsNumber()
   @Min(-90)
@@ -114,23 +149,8 @@ export class CreateShiftRequestDto {
   shift: CreateShiftDto;
 
   @ValidateNested()
-  @Type(() => CreateLocationDto)
+  @Type(() => CreateRouteDto)
   @IsNotEmpty()
   @ApiProperty()
-  origin: CreateLocationDto;
-
-  @ValidateNested()
-  @Type(() => CreateLocationDto)
-  @IsNotEmpty()
-  @ApiProperty()
-  destination: CreateLocationDto;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => LatLngDto)
-  @ApiProperty({
-    description: 'Decoded Polyline string',
-    example: 'Trip route from origin to destination',
-  })
-  route: LatLngDto[];
+  route: CreateRouteDto;
 }

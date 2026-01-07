@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
@@ -5,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   CreateLocationDto,
+  CreateRouteDto,
   CreateShiftDto,
   LatLngDto,
 } from './dto/create-shift.dto';
@@ -23,8 +25,7 @@ export class ShiftService {
         id,
       },
       include: {
-        origin: query.origin ? true : false,
-        destination: query.destination ? true : false,
+        route: query.route ? true : false,
       },
     });
     if (!shift) {
@@ -36,44 +37,35 @@ export class ShiftService {
   async getShifts() {
     return this.prisma.$queryRaw`
     SELECT
-      *,
-      ST_AsGeoJSON(route)::json as route
-    FROM "Shift"
+      s.*,
+      ST_AsGeoJSON(r.geometry)::json as route
+    FROM "Shift" s
+    JOIN "Route" r ON s."routeId" = r.id
   `;
   }
 
   async createShift(
     driverId: string,
     shiftPayload: CreateShiftDto,
-    originPayload: CreateLocationDto,
-    destinationPayload: CreateLocationDto,
-    polyline: LatLngDto[],
+    route: CreateRouteDto,
   ) {
     try {
       const driver = await this.prisma.user.findUnique({
         where: { id: driverId },
+        include: {
+          vehicle: true,
+        },
       });
       if (!driver) {
         throw new NotFoundException('Driver not found');
       }
-      const vehicle = await this.prisma.vehicle.findUnique({
-        where: { userId: driverId },
-      });
-      if (!vehicle) {
+      if (!driver.vehicle) {
         throw new NotFoundException('Registered vehicle not found for driver');
       }
       const activeShift = await this.prisma.shift.findFirst({
         where: {
-          OR: [
-            {
-              driverId,
-              status: 'online',
-            },
-            {
-              driverId,
-              status: 'offline',
-            },
-          ],
+          driverId,
+          status: 'online',
         },
       });
       if (activeShift) {
@@ -81,25 +73,35 @@ export class ShiftService {
           'Driver currently have an active shift, please end the current shift',
         );
       }
-      const shift = await this.prisma.shift.create({
-        data: {
-          ...shiftPayload,
-          vehicleId: vehicle.id,
-          driverId,
-          origin: {
-            create: { ...originPayload, userId: driverId },
-          },
-          destination: {
-            create: { ...destinationPayload, userId: driverId },
-          },
+      const shiftId = randomUUID();
+      const routeId = randomUUID();
+
+      await this.prisma.$transaction(async (tx) => {
+        // 1. Create Route
+        await tx.$executeRaw`
+          INSERT INTO "Route" (
+            id, name, geometry, "lengthMeters", "createdAt"
+          ) VALUES (
+            ${routeId}, ${route.name}, ST_LineFromEncodedPolyline(${route.geometry}), ${route.lengthMeters}, NOW()
+          )
+        `;
+
+        // 2. Create Shift
+        await tx.$executeRaw`
+          INSERT INTO "Shift" (
+            id, name, "startTime", "endTime", status, "driverId", "vehicleId", "routeId", "createdAt", "updatedAt"
+          ) VALUES (
+            ${shiftId}, ${shiftPayload.name}, ${shiftPayload.startTime}, ${shiftPayload.endTime}, 'online'::"ShiftStatus", ${driverId}, ${driver.vehicle!.id}, ${routeId}, NOW(), NOW()
+          )
+        `;
+      });
+
+      const shift = await this.prisma.shift.findUnique({
+        where: { id: shiftId },
+        include: {
+          route: true,
         },
       });
-      await this.prisma.$executeRaw`
-  UPDATE "Shift"
-  SET route = ST_LineFromEncodedPolyline(${polyline})
-
-  WHERE id = ${shift.id}
-`;
       return shift;
     } catch (error) {
       console.log('Create shift error: ', error);
@@ -113,6 +115,7 @@ export class ShiftService {
     query: ShiftQueryDto,
   ) {
     try {
+      const { route, ...updateData } = payload;
       const shiftExists = await this.prisma.shift.findUnique({
         where: { id: shiftId },
       });
@@ -121,22 +124,38 @@ export class ShiftService {
         throw new NotFoundException('Shift not found');
       }
 
-      const shift = await this.prisma.shift.update({
+      if (
+        shiftExists.status === 'ended' ||
+        shiftExists.status === 'cancelled'
+      ) {
+        delete updateData.status;
+      }
+      await this.prisma.$transaction(async (tx) => {
+        // Update standard fields
+        await tx.shift.update({
+          where: { id: shiftId },
+          data: updateData,
+        });
+
+        if (route) {
+          // Update Route record
+          await tx.$executeRaw`
+            UPDATE "Route"
+            SET 
+              name = ${route.name},
+              geometry = ST_LineFromEncodedPolyline(${route.geometry}),
+              "lengthMeters" = ${route.lengthMeters}
+            WHERE id = ${shiftExists.routeId}
+          `;
+        }
+      });
+
+      const shift = await this.prisma.shift.findUnique({
         where: { id: shiftId },
-        data: payload,
         include: {
-          origin: query.origin,
-          destination: query.destination,
+          route: query.route != undefined,
         },
       });
-      if (payload.route) {
-        await this.prisma.$executeRaw`
-  UPDATE "Shift"
-  SET route = ST_LineFromEncodedPolyline(${payload.route})
-
-  WHERE id = ${shift.id}
-`;
-      }
 
       return shift;
     } catch (error) {
@@ -155,8 +174,7 @@ export class ShiftService {
         ],
       },
       include: {
-        origin: query.origin ? true : false,
-        destination: query.destination ? true : false,
+        route: query.route != undefined,
       },
     });
   }
@@ -175,8 +193,7 @@ export class ShiftService {
         ],
       },
       include: {
-        origin: query.origin ? true : false,
-        destination: query.origin ? true : false,
+        route: query.route != undefined,
       },
     });
   }

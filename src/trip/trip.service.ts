@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   Injectable,
@@ -5,11 +6,7 @@ import {
 } from '@nestjs/common';
 import { TripQueryDto } from './dto/trip-query.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type {
-  CreateLocationDto,
-  CreateTripDto,
-  LatLngDto,
-} from './dto/create-trip.dto';
+import type { CreateLocationDto, CreateTripDto } from './dto/create-trip.dto';
 import type { UpdateTripDto } from './dto/update-trip.dto';
 
 @Injectable()
@@ -23,8 +20,7 @@ export class TripService {
         id,
       },
       include: {
-        origin: query.origin != undefined,
-        destination: query.destination != undefined,
+        vehicle: query.vehicle != undefined,
       },
     });
     if (!trip) {
@@ -35,19 +31,18 @@ export class TripService {
 
   async getTrips() {
     return this.prisma.$queryRaw`
-	SELECT
-	  *,
-	  ST_AsGeoJSON(route)::json as route
-	FROM "Trip"
-  `;
+    SELECT
+      *
+      FROM "Trip" 
+    `;
   }
 
   async createTrip(
     passengerId: string,
     tripPayload: CreateTripDto,
-    originPayload: CreateLocationDto,
-    destinationPayload: CreateLocationDto,
-    polyline: LatLngDto[],
+    origin: CreateLocationDto,
+    destination: CreateLocationDto,
+    query: TripQueryDto,
   ) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -58,16 +53,8 @@ export class TripService {
       }
       const activeTrip = await this.prisma.trip.findFirst({
         where: {
-          OR: [
-            {
-              passengerId,
-              status: 'active',
-            },
-            {
-              passengerId,
-              status: 'started',
-            },
-          ],
+          passengerId,
+          status: 'started',
         },
       });
       if (activeTrip) {
@@ -75,24 +62,27 @@ export class TripService {
           'You currently have an active trip, please end the current trip',
         );
       }
-      const trip = await this.prisma.trip.create({
-        data: {
-          ...tripPayload,
-          passengerId,
-          origin: {
-            create: { ...originPayload, userId: passengerId },
-          },
-          destination: {
-            create: { ...destinationPayload, userId: passengerId },
-          },
+      const id = randomUUID();
+      await this.prisma.$executeRaw`
+  INSERT INTO "Trip" (
+    "id", "name", "passengerId",  "mode", "status",
+    "originPoint", "destinationPoint",
+    "maxWalkMeters", "vehicleType", 
+    "createdAt", "updatedAt"
+  ) VALUES (
+    ${id}, ${tripPayload.name}, ${passengerId}, ${tripPayload.mode}::"TransportMode", 'pending'::"TripStatus",
+    ST_SetSRID(ST_Point(${origin.longitude}, ${origin.latitude}), 4326),
+    ST_SetSRID(ST_Point(${destination.longitude}, ${destination.latitude}), 4326),
+    ${origin.maxWalkMeters}, ${tripPayload.vehicleType}::"VehicleCategory",  
+    NOW(), NOW()
+  )
+`;
+      const trip = await this.prisma.trip.findUnique({
+        where: { id },
+        include: {
+          vehicle: !!query.vehicleId,
         },
       });
-      await this.prisma.$executeRaw`
-  UPDATE "Trip"
-  SET route = ST_LineFromEncodedPolyline(${polyline})
-
-  WHERE id = ${trip.id}
-`;
       return trip;
     } catch (error) {
       console.log('Create trip error: ', error);
@@ -114,18 +104,29 @@ export class TripService {
         throw new NotFoundException('Trip not found');
       }
 
+      switch (tripExists.status) {
+        case 'completed':
+          throw new BadRequestException('Trip is already completed');
+        case 'cancelled':
+          throw new BadRequestException('Trip is already cancelled');
+        default:
+          break;
+      }
+      const { originPoint, destinationPoint, ...updateData } = payload;
       const trip = await this.prisma.trip.update({
         where: { id: tripId },
-        data: payload,
-        include: {
-          origin: query.origin != undefined,
-          destination: query.destination != undefined,
-        },
+        data: updateData,
       });
-      if (payload.route) {
+      if (originPoint) {
         await this.prisma.$executeRaw`
   UPDATE "Trip"
-  SET route = ST_LineFromEncodedPolyline(${payload.route})
+  SET originPoint = ST_SetSRID(ST_Point(${originPoint.longitude}, ${originPoint.latitude}), 4326),
+  WHERE id = ${trip.id}`;
+      }
+      if (destinationPoint) {
+        await this.prisma.$executeRaw`
+    UPDATE "Trip"
+    SET destinationPoint = ST_SetSRID(ST_Point(${destinationPoint.longitude}, ${destinationPoint.latitude}), 4326)
 
   WHERE id = ${trip.id}
 `;
@@ -142,14 +143,7 @@ export class TripService {
     return this.prisma.trip.findMany({
       where: {
         passengerId,
-        OR: [
-          { status: query.active ? 'active' : undefined },
-          { status: query.completed ? 'completed' : undefined },
-        ],
-      },
-      include: {
-        origin: query.origin != undefined,
-        destination: query.destination != undefined,
+        OR: [{ status: query.completed ? 'completed' : undefined }],
       },
     });
   }
@@ -159,16 +153,8 @@ export class TripService {
     return await this.prisma.trip.findFirst({
       where: {
         passengerId,
-        OR: [
-          { status: 'pending' },
-          { status: 'active' },
-          { status: 'started' },
-        ],
+        status: { notIn: ['completed', 'cancelled'] },
         // NOT: { vehicleId: null },
-      },
-      include: {
-        origin: query.origin != undefined,
-        destination: query.destination != undefined,
       },
     });
   }
@@ -183,14 +169,7 @@ export class TripService {
     return this.prisma.trip.findFirst({
       where: {
         passengerId,
-        OR: [
-          { status: query.active ? 'active' : undefined },
-          { status: query.completed ? 'completed' : undefined },
-        ],
-      },
-      include: {
-        origin: query.origin != undefined,
-        destination: query.origin != undefined,
+        OR: [{ status: query.completed ? 'completed' : undefined }],
       },
     });
   }

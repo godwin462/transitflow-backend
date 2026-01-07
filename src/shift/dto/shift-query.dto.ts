@@ -37,10 +37,10 @@ export class ShiftQueryDto {
   @IsOptional()
   @IsBoolean()
   @ApiProperty({
-    description: 'Include origin location details',
+    description: 'Include route details',
     example: ShiftStatus.online,
   })
-  origin?: boolean;
+  route?: boolean;
 
   @Transform(({ value }) => {
     if (value === 'true') return true;

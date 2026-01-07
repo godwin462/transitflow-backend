@@ -21,6 +21,8 @@ import { EmailService } from './email/email.service';
 import { OtpService } from './otp/otp.service';
 import { HistoryModule } from './history/history.module';
 import { TripModule } from './trip/trip.module';
+import { RideRecommendationModule } from './ride-recommendation/ride-recommendation.module';
+import { ValidationTestController } from './common/controllers/validation-test.controller';
 
 @Module({
   imports: [
@@ -32,8 +34,9 @@ import { TripModule } from './trip/trip.module';
     ShiftModule,
     HistoryModule,
     TripModule,
+    RideRecommendationModule,
   ],
-  controllers: [AppController, VehicleController],
+  controllers: [AppController, VehicleController, ValidationTestController],
   providers: [
     AppService,
     PrismaService,

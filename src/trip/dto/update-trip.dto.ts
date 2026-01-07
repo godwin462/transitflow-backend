@@ -4,6 +4,8 @@ import {
   IsArray,
   IsDate,
   IsEnum,
+  IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   MinLength,
@@ -14,16 +16,50 @@ import {
   TripStatus,
   VehicleCategory,
 } from 'generated/prisma/enums';
-import { LatLngDto } from './create-trip.dto';
+import { LatLngDto } from 'src/shift/dto/create-shift.dto';
 
 export class UpdateTripDto {
-  @IsDate()
+  @IsString()
   @IsOptional()
   @ApiProperty({
-    description: 'Trip end time',
+    description: 'Vehicle ID',
+    example: '89834uuu48',
+  })
+  vehicleId?: string;
+
+  @IsEnum(VehicleCategory)
+  @IsOptional()
+  @ApiProperty({
+    description: 'Vehicle type',
+    example: 'bus',
+  })
+  vehicleType?: VehicleCategory;
+
+  @IsDate()
+  @IsOptional()
+  @Type(() => Date)
+  @ApiProperty({
+    description: 'Earliest start time',
     example: '2022-01-01T00:00:00.000Z',
   })
-  endTime?: Date;
+  earliestStart?: Date;
+
+  @IsDate()
+  @IsOptional()
+  @Type(() => Date)
+  @ApiProperty({
+    description: 'Latest start time',
+    example: '2022-01-01T00:00:00.000Z',
+  })
+  latestStart?: Date;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    description: 'Maximum walk distance in meters',
+    example: 1000,
+  })
+  maxWalkMeters?: number;
 
   @IsEnum(TripStatus)
   @IsOptional()
@@ -41,23 +77,6 @@ export class UpdateTripDto {
   })
   mode?: TransportMode;
 
-  @IsEnum(VehicleCategory)
-  @IsOptional()
-  @ApiProperty({
-    description: 'Vehicle category',
-    example: 'bus',
-  })
-  vehicleType?: VehicleCategory;
-
-  @IsString()
-  @MinLength(3)
-  @IsOptional()
-  @ApiProperty({
-    description: 'Vehicle ID',
-    example: '89834uuu48',
-  })
-  vehicleId?: string;
-
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })
@@ -67,4 +86,30 @@ export class UpdateTripDto {
     example: 'Trip route from origin to destination',
   })
   route?: LatLngDto[];
+
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LatLngDto)
+  @ApiProperty({
+    description: 'Origin point',
+    example: {
+      latitude: 40.7128,
+      longitude: -74.006,
+    },
+  })
+  originPoint?: LatLngDto;
+
+  @IsObject()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LatLngDto)
+  @ApiProperty({
+    description: 'Destination point',
+    example: {
+      latitude: 40.7128,
+      longitude: -74.006,
+    },
+  })
+  destinationPoint?: LatLngDto;
 }
