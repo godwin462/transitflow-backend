@@ -9,30 +9,29 @@ import {
   Req,
 } from '@nestjs/common';
 import { TripService } from './trip.service';
-import { CreateTripRequestDto } from './dto/create-trip.dto';
+import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { TripQueryDto } from './dto/trip-query.dto';
 import { Public } from 'src/auth/decorators/auth.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('trip')
-export class TripController {
+class TripController {
   constructor(private readonly tripService: TripService) {}
 
   @Roles('passenger')
   @Post()
   async createTrip(
-    @Body() payload: CreateTripRequestDto,
+    @Body() payload: CreateTripDto,
     @Query() query: TripQueryDto,
   ) {
+    console.log(payload);
     return {
       message: 'Trip creates successfully',
       success: true,
       data: await this.tripService.createTrip(
-        payload.trip.passengerId,
-        payload.trip,
-        payload.origin,
-        payload.destination,
+        payload.passengerId,
+        payload,
         query,
       ),
     };
@@ -98,3 +97,5 @@ export class TripController {
     };
   }
 }
+
+export default TripController;

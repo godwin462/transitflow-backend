@@ -40,8 +40,6 @@ export class TripService {
   async createTrip(
     passengerId: string,
     tripPayload: CreateTripDto,
-    origin: CreateLocationDto,
-    destination: CreateLocationDto,
     query: TripQueryDto,
   ) {
     try {
@@ -65,25 +63,25 @@ export class TripService {
       const id = randomUUID();
       await this.prisma.$executeRaw`
   INSERT INTO "Trip" (
-    "id", "name", "passengerId",  "mode", "status",
-    "originPoint", "destinationPoint",
-    "maxWalkMeters", "vehicleType", 
+    "id", "name", "originName","destinationName", "passengerId",  "mode", "status",
+    "originPoint", "destinationPoint", "ploylineSrting",
+    "maxWalkMeters",
     "createdAt", "updatedAt"
   ) VALUES (
-    ${id}, ${tripPayload.name}, ${passengerId}, ${tripPayload.mode}::"TransportMode", 'pending'::"TripStatus",
-    ST_SetSRID(ST_Point(${origin.longitude}, ${origin.latitude}), 4326),
-    ST_SetSRID(ST_Point(${destination.longitude}, ${destination.latitude}), 4326),
-    ${origin.maxWalkMeters}, ${tripPayload.vehicleType}::"VehicleCategory",  
-    NOW(), NOW()
-  )
-`;
-      const trip = await this.prisma.trip.findUnique({
+            ${id}, ${tripPayload.name}, ${tripPayload.originName}, ${tripPayload.destinationName}, ${passengerId}, ${tripPayload.mode}::"TransportMode", 'pending'::"TripStatus",
+            ST_SetSRID(ST_Point(${tripPayload.originPoint.longitude}, ${tripPayload.originPoint.latitude}), 4326),
+            ST_SetSRID(ST_Point(${tripPayload.destinationPoint.longitude}, ${tripPayload.destinationPoint.latitude}), 4326),
+            ${tripPayload.polylineString},
+            ${tripPayload.maxWalkMeters},  
+            NOW(), NOW()
+             )
+             `;
+      return this.prisma.trip.findUnique({
         where: { id },
         include: {
           vehicle: !!query.vehicleId,
         },
       });
-      return trip;
     } catch (error) {
       console.log('Create trip error: ', error);
       throw error;
@@ -112,7 +110,7 @@ export class TripService {
         default:
           break;
       }
-      const { originPoint, destinationPoint, ...updateData } = payload;
+      const { originPoint, destinationPoint, polylineString, ...updateData } = payload;
       const trip = await this.prisma.trip.update({
         where: { id: tripId },
         data: updateData,
@@ -129,6 +127,13 @@ export class TripService {
     SET destinationPoint = ST_SetSRID(ST_Point(${destinationPoint.longitude}, ${destinationPoint.latitude}), 4326)
 
   WHERE id = ${trip.id}
+`;
+      }
+      if (polylineString) {
+        await this.prisma.$executeRaw`
+    UPDATE "Trip"
+    SET ploylineSrting = ${polylineString}
+      WHERE id = ${trip.id}
 `;
       }
 

@@ -13,6 +13,26 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+export class LatLngDto {
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  @ApiProperty({
+    description: 'Latitude',
+    example: 37.7749,
+  })
+  latitude: number;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  @ApiProperty({
+    description: 'Longitude',
+    example: -122.4194,
+  })
+  longitude: number;
+}
+
 export class CreateShiftDto {
   @IsString()
   @MinLength(3)
@@ -22,6 +42,22 @@ export class CreateShiftDto {
     example: 'Shift 1',
   })
   name: string;
+  @IsString()
+  @MinLength(3)
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Shift origin name',
+    example: 'Shift 1',
+  })
+  originName: string;
+  @IsString()
+  @MinLength(3)
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Shift destination name',
+    example: 'Shift 1',
+  })
+  destinationName: string;
 
   @Transform(({ value }) => new Date(value))
   @IsDate()
@@ -57,13 +93,21 @@ export class CreateShiftDto {
   })
   vehicleId: string;
 
-  @IsString()
+  @Type(() => LatLngDto)
   @IsNotEmpty()
   @ApiProperty({
-    description: 'Route ID',
-    example: 'routeId',
+    description: 'Origin of the route',
+    example: { latitude: 37.7749, longitude: -122.4194 },
   })
-  routeId: string;
+  origin: LatLngDto;
+
+  @Type(() => LatLngDto)
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Destination of the route',
+    example: { latitude: 37.7749, longitude: -122.4194 },
+  })
+  destination: LatLngDto;
 }
 
 export class CreateLocationDto {
@@ -103,14 +147,12 @@ export class CreateRouteDto {
   })
   name: string;
 
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => LatLngDto)
+  @IsString()
   @ApiProperty({
-    description: 'Decoded Polyline string',
-    example: 'Trip route from origin to destination',
+    description: 'Encoded Polyline string',
+    example: 'u{~vFvyys@fGe}',
   })
-  geometry: LatLngDto[];
+  geometry: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -119,26 +161,6 @@ export class CreateRouteDto {
     example: 12345,
   })
   lengthMeters: number;
-}
-
-export class LatLngDto {
-  @IsNumber()
-  @Min(-90)
-  @Max(90)
-  @ApiProperty({
-    description: 'Latitude',
-    example: 37.7749,
-  })
-  latitude: number;
-
-  @IsNumber()
-  @Min(-180)
-  @Max(180)
-  @ApiProperty({
-    description: 'Longitude',
-    example: -122.4194,
-  })
-  longitude: number;
 }
 
 export class CreateShiftRequestDto {

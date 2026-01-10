@@ -7,7 +7,7 @@ export class HistoryService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDriverShiftHistory(driverId: string, query: ShiftQueryDto) {
-    const history = await this.prisma.shift.findMany({
+    return this.prisma.shift.findMany({
       where: {
         driverId,
         // NOT: { OR: [{ status: 'active' }, { status: 'on_break' }] },
@@ -15,15 +15,14 @@ export class HistoryService {
       },
       orderBy: { updatedAt: 'desc' },
       include: {
-        route: query.route ? true : false,
-        vehicle: query.vehicle ? true : false,
+        route: !!query.route,
+        vehicle: !!query.vehicle,
       },
     });
-    return history;
   }
 
   async getPassengerTripHistory(passengerId: string, query: ShiftQueryDto) {
-    const history = await this.prisma.trip.findMany({
+    return this.prisma.trip.findMany({
       where: {
         passengerId,
         status: {
@@ -32,9 +31,8 @@ export class HistoryService {
       },
       orderBy: { updatedAt: 'desc' },
       include: {
-        vehicle: query.vehicle ? true : false,
+        vehicle: !!query.vehicle,
       },
     });
-    return history;
   }
 }

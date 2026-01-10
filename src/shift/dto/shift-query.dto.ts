@@ -47,14 +47,6 @@ export class ShiftQueryDto {
     if (value === 'false') return false;
     return value as boolean; // Returns original value if it's not a boolean string
   })
-  @IsOptional()
-  @IsBoolean()
-  @ApiProperty({
-    description: 'Include destination location details',
-    example: ShiftStatus.online,
-  })
-  destination?: boolean;
-
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;

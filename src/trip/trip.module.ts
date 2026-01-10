@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TripController } from './trip.controller';
+import TripController from './trip.controller';
 import { TripService } from './trip.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 

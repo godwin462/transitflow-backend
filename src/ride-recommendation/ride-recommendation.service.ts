@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-const staticId = 'cmjwmc7yi00008sj7lqg9pl8f';
+// Geometry returned by Pg/pg: could be Buffer, string (EWKT/GeoJSON), or an object.
+// Be conservative and allow the common cases.
 
 @Injectable()
 export class RideRecommendationService {
@@ -20,7 +21,7 @@ export class RideRecommendationService {
     }
 
     // 2️⃣ Run geospatial recommendation query
-    const matches = await this.prisma.$queryRawUnsafe<any[]>(
+    const matches = await this.prisma.$queryRawUnsafe<RawMatch[]>(
       `
       WITH trip_data AS (
         SELECT
@@ -104,6 +105,8 @@ export class RideRecommendationService {
         `,
       ),
     );
+    
+    console.log(matches);
 
     // 4️⃣ Return original or fetched matches (returning number of rows for now or any required data)
     return {

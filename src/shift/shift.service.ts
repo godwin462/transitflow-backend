@@ -4,15 +4,37 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  CreateLocationDto,
-  CreateRouteDto,
-  CreateShiftDto,
-  LatLngDto,
-} from './dto/create-shift.dto';
+import { CreateRouteDto, CreateShiftDto } from './dto/create-shift.dto';
 import { UpdateShiftDto } from './dto/update-shift.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ShiftQueryDto } from './dto/shift-query.dto';
+import { Prisma } from 'generated/prisma/client';
+
+type GeoPoint = {
+  type: 'Point';
+  coordinates: [number, number];
+};
+
+type GeoLineString = {
+  type: 'LineString';
+  coordinates: [number, number][];
+};
+
+type RouteRecord = {
+  id: string;
+  name: string;
+  startTime: string; // ISO date string
+  endTime: string; // ISO date string
+  status: 'online' | 'offline' | string; // extend as needed
+  driverId: string;
+  vehicleId: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  routeId: string;
+  destination: GeoPoint;
+  origin: GeoPoint;
+  route: GeoLineString;
+};
 
 @Injectable()
 export class ShiftService {
@@ -38,7 +60,10 @@ export class ShiftService {
     return this.prisma.$queryRaw`
     SELECT
       s.*,
-      ST_AsGeoJSON(r.geometry)::json as route
+      r."polylineString",
+      ST_AsGeoJSON(ST_Transform(s.origin, 4326))::json as origin,
+      ST_AsGeoJSON(ST_Transform(s.destination, 4326))::json as destination,
+      ST_AsGeoJSON(ST_Transform(ST_SetSRID(r.geometry, 3857), 4326))::json as route
     FROM "Shift" s
     JOIN "Route" r ON s."routeId" = r.id
   `;
@@ -80,18 +105,20 @@ export class ShiftService {
         // 1. Create Route
         await tx.$executeRaw`
           INSERT INTO "Route" (
-            id, name, geometry, "lengthMeters", "createdAt"
+            id, name, geometry, "polylineString", "lengthMeters", "createdAt"
           ) VALUES (
-            ${routeId}, ${route.name}, ST_LineFromEncodedPolyline(${route.geometry}), ${route.lengthMeters}, NOW()
+            ${routeId}, ${route.name}, ST_LineFromEncodedPolyline(${route.geometry}), ${route.geometry}, ${route.lengthMeters}, NOW()
           )
         `;
 
         // 2. Create Shift
         await tx.$executeRaw`
           INSERT INTO "Shift" (
-            id, name, "startTime", "endTime", status, "driverId", "vehicleId", "routeId", "createdAt", "updatedAt"
+            id, name,"originName","destinationName", "startTime", "endTime", status, "driverId", "vehicleId", "routeId", "createdAt", "updatedAt", "origin", "destination"
           ) VALUES (
-            ${shiftId}, ${shiftPayload.name}, ${shiftPayload.startTime}, ${shiftPayload.endTime}, 'online'::"ShiftStatus", ${driverId}, ${driver.vehicle!.id}, ${routeId}, NOW(), NOW()
+            ${shiftId}, ${shiftPayload.name},${shiftPayload.originName},${shiftPayload.destinationName}, ${shiftPayload.startTime}, ${shiftPayload.endTime}, 'online'::"ShiftStatus", ${driverId}, ${driver.vehicle!.id}, ${routeId}, NOW(), NOW(),
+            ST_SetSRID(ST_MakePoint(${shiftPayload.origin.longitude}, ${shiftPayload.origin.latitude}), 4326),
+            ST_SetSRID(ST_MakePoint(${shiftPayload.destination.longitude}, ${shiftPayload.destination.latitude}), 4326)
           )
         `;
       });
@@ -141,9 +168,10 @@ export class ShiftService {
           // Update Route record
           await tx.$executeRaw`
             UPDATE "Route"
-            SET 
+            SET
               name = ${route.name},
               geometry = ST_LineFromEncodedPolyline(${route.geometry}),
+              "polylineString" = ${route.geometry},
               "lengthMeters" = ${route.lengthMeters}
             WHERE id = ${shiftExists.routeId}
           `;
@@ -184,7 +212,7 @@ export class ShiftService {
     if (!user) {
       throw new NotFoundException('Driver not found');
     }
-    return this.prisma.shift.findFirst({
+    /* return this.prisma.shift.findFirst({
       where: {
         driverId,
         OR: [
@@ -195,6 +223,30 @@ export class ShiftService {
       include: {
         route: query.route != undefined,
       },
-    });
+    }); */
+
+    let statusCondition = 'FALSE';
+    if (query.online && query.offline) {
+      statusCondition = "s.status IN ('online', 'offline')";
+    } else if (query.online) {
+      statusCondition = "s.status = 'online'";
+    } else if (query.offline) {
+      statusCondition = "s.status = 'offline'";
+    }
+
+    const shifts: RouteRecord[] = await this.prisma.$queryRaw`
+    SELECT
+      s.*,
+      r.name as "name",
+      ST_AsGeoJSON(ST_Transform(s.origin, 4326))::json as origin,
+      ST_AsGeoJSON(ST_Transform(s.destination, 4326))::json as destination,
+      ST_AsGeoJSON(ST_Transform(ST_SetSRID(r.geometry, 3857), 4326))::json as route
+    FROM "Shift" s
+    JOIN "Route" r ON s."routeId" = r.id
+    WHERE s."driverId" = ${driverId}
+      AND ${Prisma.raw(statusCondition)}
+  `;
+    // console.log(shifts[0].destination.coordinates);
+    return shifts[0] ? shifts[0] : null;
   }
 }

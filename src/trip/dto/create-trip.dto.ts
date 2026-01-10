@@ -26,6 +26,22 @@ export class CreateTripDto {
     example: 'Trip 1',
   })
   name: string;
+  @IsString()
+  @MinLength(3)
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Trip origin name',
+    example: 'Trip 1',
+  })
+  originName: string;
+  @IsString()
+  @MinLength(3)
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Trip destination name',
+    example: 'Trip 1',
+  })
+  destinationName: string;
 
   @IsString()
   @IsNotEmpty()
@@ -34,6 +50,14 @@ export class CreateTripDto {
     example: 'passengerId',
   })
   passengerId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Trip polyline string',
+    example: '-02-3949rr0w=f[e',
+  })
+  polylineString: string;
 
   @IsEnum(TransportMode)
   @IsNotEmpty()
@@ -71,7 +95,7 @@ export class CreateTripDto {
     description: 'Vehicle category',
     example: 'car',
   })
-  maxWalMeters?: number;
+  maxWalkMeters?: number;
 }
 
 export class CreateLocationDto {
@@ -100,14 +124,6 @@ export class CreateLocationDto {
     example: '123 Main St',
   })
   address: string;
-
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'Maximum walk distance in meters',
-    example: 1000,
-  })
-  maxWalkMeters: number;
 }
 
 export class CreateTripRequestDto {
@@ -117,24 +133,4 @@ export class CreateTripRequestDto {
   @ApiProperty()
   trip: CreateTripDto;
 
-  @ValidateNested()
-  @Type(() => CreateLocationDto)
-  @IsNotEmpty()
-  @ApiProperty()
-  origin: CreateLocationDto;
-
-  @ValidateNested()
-  @Type(() => CreateLocationDto)
-  @IsNotEmpty()
-  @ApiProperty()
-  destination: CreateLocationDto;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => LatLngDto)
-  @ApiProperty({
-    description: 'Decoded origin to destination Polyline string',
-    example: 'Trip route from origin to destination',
-  })
-  route: LatLngDto[];
 }

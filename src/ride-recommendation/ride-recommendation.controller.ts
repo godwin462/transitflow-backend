@@ -9,7 +9,11 @@ export class RideRecommendationController {
 
   @Post('find-trip-rides/:tripId')
   async recommendForTrips(@Param('tripId') tripId: string) {
-    return await this.rideRecommendationService.recommendForTrips(tripId);
+    return {
+      message: 'Recommendations found',
+      success: true,
+      data: await this.rideRecommendationService.recommendForTrips(tripId),
+    };
   }
 
   @Get('all-recommendations')

@@ -40,3 +40,15 @@ interface BrevoMailPayload {
   subject: string;
   html: string;
 }
+
+// Row shape returned by the recommendation query
+interface RawMatch {
+  shift_id: string;
+  pickup_point: PostgisGeometry;
+  dropoff_point: PostgisGeometry;
+  pickup_fraction: number;
+  dropoff_fraction: number;
+  pickup_walk_meters: number;
+  dropoff_walk_meters: number;
+  score: number;
+}

@@ -121,11 +121,12 @@ model Location {
 }
 
 model Route {
-  id           String                  @id @default(cuid())
-  name         String?
-  geometry     Unsupported("geometry") // LineString
-  lengthMeters Float
-  createdAt    DateTime                @default(now())
+  id             String                  @id @default(cuid())
+  name           String?
+  geometry       Unsupported("geometry") // LineString
+  polylineString String?
+  lengthMeters   Float
+  createdAt      DateTime                @default(now())
 
   shifts Shift[]
 
@@ -133,25 +134,31 @@ model Route {
 }
 
 model Shift {
-  id        String      @id @default(cuid())
-  name      String
-  startTime DateTime
-  endTime   DateTime?
-  status    ShiftStatus @default(online)
-  driverId  String
-  vehicleId String
-  routeId   String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  driver    User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  vehicle   Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  route     Route       @relation(fields: [routeId], references: [id])
-  matches   RideMatch[]
+  id              String                  @id @default(cuid())
+  name            String
+  originName      String
+  destinationName String
+  startTime       DateTime
+  endTime         DateTime?
+  status          ShiftStatus             @default(online)
+  driverId        String
+  vehicleId       String
+  routeId         String
+  origin          Unsupported("geometry") // Point
+  destination     Unsupported("geometry") // Point
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  driver          User                    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicle         Vehicle                 @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  route           Route                   @relation(fields: [routeId], references: [id])
+  matches         RideMatch[]
 }
 
 model Trip {
   id               String                  @id @default(cuid())
   name             String
+  originName       String // Name
+  destinationName  String // Name
   passengerId      String
   mode             TransportMode           @default(public)
   status           TripStatus              @default(pending)
@@ -159,6 +166,7 @@ model Trip {
   createdAt        DateTime                @default(now())
   vehicleType      VehicleCategory?
   updatedAt        DateTime                @updatedAt
+  ploylineSrting   String
   originPoint      Unsupported("geometry") // Point
   destinationPoint Unsupported("geometry") // Point
 

@@ -22,6 +22,14 @@ export class UpdateTripDto {
   @IsString()
   @IsOptional()
   @ApiProperty({
+    description: 'Trip polyline string',
+    example: '-02-3949rr0w=f[e',
+  })
+  polylineString?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
     description: 'Vehicle ID',
     example: '89834uuu48',
   })
