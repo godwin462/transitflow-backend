@@ -8,6 +8,7 @@ import { TripQueryDto } from './dto/trip-query.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import type { CreateLocationDto, CreateTripDto } from './dto/create-trip.dto';
 import type { UpdateTripDto } from './dto/update-trip.dto';
+import { Trip } from 'generated/prisma/browser';
 
 @Injectable()
 export class TripService {
@@ -15,18 +16,16 @@ export class TripService {
 
   async getTripById(id: string, query: TripQueryDto) {
     // console.log(id, 'Query params: ', query);
-    const trip = await this.prisma.trip.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        vehicle: query.vehicle != undefined,
-      },
-    });
-    if (!trip) {
+    const trip: Trip[] = await this.prisma.$queryRaw`
+    SELECT t.*,
+           ST_AsGeoJSON(ST_Transform(t."originPoint", 4326))::json as "originPoint",
+    ST_AsGeoJSON(ST_Transform(t."destinationPoint", 4326))::json as "destinationPoint"
+    FROM "Trip" t WHERE id = ${id}
+    `;
+    if (!trip || (Array.isArray(trip) && !trip[0])) {
       throw new NotFoundException('Trip not found');
     }
-    return trip;
+    return trip[0];
   }
 
   async getTrips() {
@@ -64,7 +63,7 @@ export class TripService {
       await this.prisma.$executeRaw`
   INSERT INTO "Trip" (
     "id", "name", "originName","destinationName", "passengerId",  "mode", "status",
-    "originPoint", "destinationPoint", "ploylineSrting",
+    "originPoint", "destinationPoint", "polylineString",
     "maxWalkMeters",
     "createdAt", "updatedAt"
   ) VALUES (
@@ -110,7 +109,8 @@ export class TripService {
         default:
           break;
       }
-      const { originPoint, destinationPoint, polylineString, ...updateData } = payload;
+      const { originPoint, destinationPoint, polylineString, ...updateData } =
+        payload;
       const trip = await this.prisma.trip.update({
         where: { id: tripId },
         data: updateData,
@@ -132,7 +132,7 @@ export class TripService {
       if (polylineString) {
         await this.prisma.$executeRaw`
     UPDATE "Trip"
-    SET ploylineSrting = ${polylineString}
+    SET polylineString = ${polylineString}
       WHERE id = ${trip.id}
 `;
       }
@@ -155,13 +155,17 @@ export class TripService {
 
   async getActivePassengerTrip(passengerId: string, query: TripQueryDto) {
     // console.log(passengerId, `Getting passengers trips with query:`, query);
-    return await this.prisma.trip.findFirst({
-      where: {
-        passengerId,
-        status: { notIn: ['completed', 'cancelled'] },
-        // NOT: { vehicleId: null },
-      },
-    });
+    const trip: Trip[] = await this.prisma.$queryRaw`
+      SELECT t.*,
+             ST_AsGeoJSON(ST_Transform(t."originPoint", 4326))::json as "originPoint", ST_AsGeoJSON(ST_Transform(t."destinationPoint", 4326)) ::json as "destinationPoint"
+      FROM "Trip" t
+      WHERE "passengerId" = ${passengerId}
+        AND status NOT IN ('completed', 'cancelled')
+    `;
+    if (!trip || (Array.isArray(trip) && !trip[0])) {
+      throw new NotFoundException('Trip not found');
+    }
+    return trip[0];
   }
 
   async getTripByPassengerId(passengerId: string, query: TripQueryDto) {

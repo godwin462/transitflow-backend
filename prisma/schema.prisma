@@ -166,7 +166,7 @@ model Trip {
   createdAt        DateTime                @default(now())
   vehicleType      VehicleCategory?
   updatedAt        DateTime                @updatedAt
-  ploylineSrting   String
+  polylineString   String
   originPoint      Unsupported("geometry") // Point
   destinationPoint Unsupported("geometry") // Point
 
