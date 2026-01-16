@@ -13,7 +13,7 @@ import {
 import {
   TransportMode,
   TripStatus,
-  VehicleCategory,
+  TripVehicleCategory,
 } from 'generated/prisma/enums';
 import { LatLngDto } from 'src/shift/dto/create-shift.dto';
 
@@ -34,13 +34,13 @@ export class UpdateTripDto {
   })
   vehicleId?: string;
 
-  @IsEnum(VehicleCategory)
+  @IsEnum(TripVehicleCategory)
   @IsOptional()
   @ApiProperty({
     description: 'Vehicle type',
     example: 'bus',
   })
-  vehicleType?: VehicleCategory;
+  vehicleType?: 'car';
 
   @IsDate()
   @IsOptional()

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { TripQueryDto } from './dto/trip-query.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import type { CreateLocationDto, CreateTripDto } from './dto/create-trip.dto';
+import type { CreateTripDto } from './dto/create-trip.dto';
 import type { UpdateTripDto } from './dto/update-trip.dto';
 import { Trip } from 'generated/prisma/browser';
 
@@ -111,6 +111,7 @@ export class TripService {
       }
       const { originPoint, destinationPoint, polylineString, ...updateData } =
         payload;
+
       const trip = await this.prisma.trip.update({
         where: { id: tripId },
         data: updateData,

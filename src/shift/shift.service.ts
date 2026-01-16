@@ -47,7 +47,8 @@ export class ShiftService {
         id,
       },
       include: {
-        route: query.route ? true : false,
+        route: !!query.route,
+        vehicle: !!query.vehicle,
       },
     });
     if (!shift) {

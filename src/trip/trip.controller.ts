@@ -75,7 +75,6 @@ class TripController {
     @Req() req: RequestWithUser,
     @Query() query: TripQueryDto,
   ) {
-    console.log(req.user, `Getting passengers trips with query:`, query);
     return {
       message: 'Trips fetched successfully',
       success: true,

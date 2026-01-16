@@ -7,12 +7,14 @@ export class RideRecommendationController {
     private readonly rideRecommendationService: RideRecommendationService,
   ) {}
 
-  @Post('find-trip-rides/:tripId')
+  @Post('public/:tripId')
   async recommendForTrips(@Param('tripId') tripId: string) {
+    const matches =
+      await this.rideRecommendationService.recommendPublicRides(tripId);
     return {
-      message: 'Recommendations found',
+      message: matches[0] ? 'Matches found' : 'No matches found',
       success: true,
-      data: await this.rideRecommendationService.recommendForTrips(tripId),
+      data: matches,
     };
   }
 

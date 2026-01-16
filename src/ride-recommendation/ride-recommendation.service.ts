@@ -9,7 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class RideRecommendationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recommendForTrips(tripId: string) {
+  async recommendPublicRides(tripId: string) {
     // 1️⃣ Ensure trip exists
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
@@ -36,8 +36,10 @@ export class RideRecommendationService {
       candidate_shifts AS (
         SELECT
           s.id AS shift_id,
-          r.geometry AS route
+          r.geometry AS route,
+          v."licensePlate" AS vehicle_license_plate
         FROM "Shift" s
+            Left Join "Vehicle" v ON v.id = s."vehicleId"
         JOIN "Route" r ON r.id = s."routeId"
         WHERE s.status = 'online'
       ),
@@ -45,6 +47,7 @@ export class RideRecommendationService {
       matched AS (
         SELECT
           cs.shift_id,
+          cs.vehicle_license_plate,
           ST_ClosestPoint(cs.route, td."originPoint") AS pickup_point,
           ST_ClosestPoint(cs.route, td."destinationPoint") AS dropoff_point,
 
@@ -66,6 +69,7 @@ export class RideRecommendationService {
         dropoff_fraction,
         pickup_walk_meters,
         dropoff_walk_meters,
+        vehicle_license_plate,
         (
           pickup_walk_meters +
           dropoff_walk_meters +
@@ -105,15 +109,8 @@ export class RideRecommendationService {
         `,
       ),
     );
-    
-    console.log(matches);
 
-    // 4️⃣ Return original or fetched matches (returning number of rows for now or any required data)
-    return {
-      message: matches[0] ? 'Matches found' : 'No matches found',
-      success: true,
-      data: matches,
-    };
+    return matches;
   }
 
   async getAllRecommendations() {

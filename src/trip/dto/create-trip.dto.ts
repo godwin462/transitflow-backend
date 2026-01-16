@@ -14,7 +14,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TransportMode, VehicleCategory } from 'generated/prisma/enums';
+import { TransportMode, TripVehicleCategory } from 'generated/prisma/enums';
 import { LatLngDto } from 'src/shift/dto/create-shift.dto';
 
 export class CreateTripDto {
@@ -81,13 +81,13 @@ export class CreateTripDto {
   })
   destinationPoint: LatLngDto;
 
-  @IsEnum(VehicleCategory)
+  @IsEnum(TripVehicleCategory)
   @IsOptional()
   @ApiProperty({
     description: 'Vehicle category',
     example: 'car',
   })
-  vehicleType?: VehicleCategory;
+  vehicleType?: 'bus';
 
   @IsNumber()
   @IsOptional()

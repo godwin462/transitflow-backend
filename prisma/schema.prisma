@@ -164,7 +164,7 @@ model Trip {
   status           TripStatus              @default(pending)
   vehicleId        String?
   createdAt        DateTime                @default(now())
-  vehicleType      VehicleCategory?
+  vehicleType      TripVehicleCategory?
   updatedAt        DateTime                @updatedAt
   polylineString   String
   originPoint      Unsupported("geometry") // Point
@@ -233,6 +233,21 @@ enum Gender {
 }
 
 enum VehicleCategory {
+  car
+  truck
+  motorcycle
+  danfo
+  ferry
+  train
+  brt
+  tricycle
+  bike
+  suv
+  sedan
+}
+
+enum TripVehicleCategory {
+  all
   car
   truck
   motorcycle
