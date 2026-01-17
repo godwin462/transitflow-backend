@@ -16,6 +16,7 @@ export class ShiftQueryDto {
     example: ShiftStatus.online,
   })
   online?: boolean;
+
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
@@ -28,6 +29,19 @@ export class ShiftQueryDto {
     example: ShiftStatus.online,
   })
   offline?: boolean;
+
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean; // Returns original value if it's not a boolean string
+  })
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'Filter shifts by driver inclusion',
+    example: true,
+  })
+  driver?: boolean;
 
   @Transform(({ value }) => {
     if (value === 'true') return true;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ShiftQueryDto } from 'src/shift/dto/shift-query.dto';
+import { TripQueryDto } from 'src/trip/dto/trip-query.dto';
 
 @Injectable()
 export class HistoryService {
@@ -21,7 +22,7 @@ export class HistoryService {
     });
   }
 
-  async getPassengerTripHistory(passengerId: string, query: ShiftQueryDto) {
+  async getPassengerTripHistory(passengerId: string, query: TripQueryDto) {
     return this.prisma.trip.findMany({
       where: {
         passengerId,
@@ -31,7 +32,7 @@ export class HistoryService {
       },
       orderBy: { updatedAt: 'desc' },
       include: {
-        vehicle: !!query.vehicle,
+        shift: !!query.shift,
       },
     });
   }

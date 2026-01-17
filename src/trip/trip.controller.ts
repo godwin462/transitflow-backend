@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -11,7 +12,10 @@ import {
 import { TripService } from './trip.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
-import { TripQueryDto } from './dto/trip-query.dto';
+import {
+  MatchTripWithPublicVehicleDto,
+  TripQueryDto,
+} from './dto/trip-query.dto';
 import { Public } from 'src/auth/decorators/auth.decorator';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
@@ -88,11 +92,26 @@ class TripController {
     @Param('id') passengerId: string,
     @Query() query: TripQueryDto,
   ) {
-    // console.log(passengerId, `Getting passengers trips with query:`, query);
     return {
       message: 'Trips fetched successfully',
       success: true,
       data: await this.tripService.getTripByPassengerId(passengerId, query),
+    };
+  }
+
+  @Roles('passenger')
+  @Patch('passenger/public/match-vehicle/:tripId')
+  async matchPassengerTripWithPublicVehicle(
+    @Param('tripId') tripId: string,
+    @Body() payload: MatchTripWithPublicVehicleDto,
+  ) {
+    return {
+      message: 'Trips fetched successfully',
+      success: true,
+      data: await this.tripService.matchPassengerTripWithPublicVehicle(
+        tripId,
+        payload.shiftId,
+      ),
     };
   }
 }

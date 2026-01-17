@@ -15,17 +15,33 @@ export class TripService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getTripById(id: string, query: TripQueryDto) {
+    console.log(query);
     // console.log(id, 'Query params: ', query);
-    const trip: Trip[] = await this.prisma.$queryRaw`
-    SELECT t.*,
-           ST_AsGeoJSON(ST_Transform(t."originPoint", 4326))::json as "originPoint",
-    ST_AsGeoJSON(ST_Transform(t."destinationPoint", 4326))::json as "destinationPoint"
-    FROM "Trip" t WHERE id = ${id}
-    `;
-    if (!trip || (Array.isArray(trip) && !trip[0])) {
+    // const trip: Trip[] = await this.prisma.$queryRaw`
+    // SELECT t.*,
+    //        ST_AsGeoJSON(ST_Transform(t."originPoint", 4326))::json as "originPoint",
+    // ST_AsGeoJSON(ST_Transform(t."destinationPoint", 4326))::json as "destinationPoint"
+    // FROM "Trip" t WHERE id = ${id}
+    // `;
+    // if (!trip || (Array.isArray(trip) && !trip[0])) {
+    //   throw new NotFoundException('Trip not found');
+    // }
+    // return trip[0];
+    const trip = await this.prisma.trip.findUnique({
+      where: { id },
+      include: {
+        shift: query.shift
+          ? query.vehicle
+            ? { include: { vehicle: true, driver: true } }
+            : true
+          : false,
+        passenger: !!query.passenger,
+      },
+    });
+    if (!trip) {
       throw new NotFoundException('Trip not found');
     }
-    return trip[0];
+    return trip;
   }
 
   async getTrips() {
@@ -78,7 +94,7 @@ export class TripService {
       return this.prisma.trip.findUnique({
         where: { id },
         include: {
-          vehicle: !!query.vehicleId,
+          shift: !!query.shiftId,
         },
       });
     } catch (error) {
@@ -155,7 +171,6 @@ export class TripService {
   }
 
   async getActivePassengerTrip(passengerId: string, query: TripQueryDto) {
-    // console.log(passengerId, `Getting passengers trips with query:`, query);
     const trip: Trip[] = await this.prisma.$queryRaw`
       SELECT t.*,
              ST_AsGeoJSON(ST_Transform(t."originPoint", 4326))::json as "originPoint", ST_AsGeoJSON(ST_Transform(t."destinationPoint", 4326)) ::json as "destinationPoint"
@@ -180,6 +195,31 @@ export class TripService {
       where: {
         passengerId,
         OR: [{ status: query.completed ? 'completed' : undefined }],
+      },
+    });
+  }
+
+  async matchPassengerTripWithPublicVehicle(tripId: string, shiftId: string) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+    const shift = await this.prisma.shift.findUnique({
+      where: { id: shiftId },
+      include: {
+        vehicle: true,
+      },
+    });
+    if (!shift) {
+      throw new NotFoundException('Shift not found');
+    }
+    return this.prisma.trip.update({
+      where: { id: tripId },
+      data: {
+        shiftId,
+        status: 'matched',
       },
     });
   }

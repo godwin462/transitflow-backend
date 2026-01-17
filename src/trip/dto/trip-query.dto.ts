@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class TripQueryDto {
   @Transform(({ value }) => {
@@ -15,6 +15,19 @@ export class TripQueryDto {
     example: true,
   })
   active?: boolean;
+
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean; // Returns original value if it's not a boolean string
+  })
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'include trip vehicle',
+    example: true,
+  })
+  vehicle?: boolean;
 
   @Transform(({ value }) => {
     if (value === 'true') return true;
@@ -60,7 +73,20 @@ export class TripQueryDto {
     if (value === 'false') return false;
     return value as boolean; // Returns original value if it's not a boolean string
   })
-  @IsString()
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: 'Include passenger details',
+    example: true,
+  })
+  passenger?: boolean;
+
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean; // Returns original value if it's not a boolean string
+  })
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
     description: 'Filter trips by driver ID',
@@ -73,19 +99,34 @@ export class TripQueryDto {
     if (value === 'false') return false;
     return value as boolean; // Returns original value if it's not a boolean string
   })
-  @IsString()
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
-    description: 'Filter trips by vehicle ID',
-    example: 'vehicleId',
+    description: 'Filter trips by shift ID',
+    example: 'shiftId',
   })
-  vehicleId?: string;
+  shiftId?: string;
 
-  @IsString()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean; // Returns original value if it's not a boolean string
+  })
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
-    description: 'Filter trips to include vehicle details',
-    example: 'vehicleId',
+    description: 'Filter trips to include shift details',
+    example: true,
   })
-  vehicle?: string;
+  shift?: boolean;
+}
+
+export class MatchTripWithPublicVehicleDto {
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    description: 'Shift ID',
+    example: 'shiftId',
+  })
+  shiftId: string;
 }

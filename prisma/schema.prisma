@@ -104,7 +104,6 @@ model Vehicle {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   shifts       Shift[]
-  trips        Trip[]
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   images       VehicleImage[]
 }
@@ -152,6 +151,7 @@ model Shift {
   vehicle         Vehicle                 @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   route           Route                   @relation(fields: [routeId], references: [id])
   matches         RideMatch[]
+  trips           Trip[]
 }
 
 model Trip {
@@ -162,7 +162,7 @@ model Trip {
   passengerId      String
   mode             TransportMode           @default(public)
   status           TripStatus              @default(pending)
-  vehicleId        String?
+  shiftId          String?
   createdAt        DateTime                @default(now())
   vehicleType      TripVehicleCategory?
   updatedAt        DateTime                @updatedAt
@@ -175,8 +175,8 @@ model Trip {
   latestStart   DateTime?
   matches       RideMatch[]
 
-  passenger User     @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  passenger User   @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  shift     Shift? @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
   @@index([originPoint], type: Gist)
   @@index([destinationPoint], type: Gist)
@@ -290,12 +290,12 @@ enum TransportMode {
 
 enum TripStatus {
   searching
-  matched
-  accepted
-  pending
-  started
   completed // trip
   cancelled
+  accepted
+  pending
+  matched
+  started
 }
 
 enum RideMatchStatus {

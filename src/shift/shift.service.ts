@@ -49,6 +49,7 @@ export class ShiftService {
       include: {
         route: !!query.route,
         vehicle: !!query.vehicle,
+        driver: !!query.driver,
       },
     });
     if (!shift) {

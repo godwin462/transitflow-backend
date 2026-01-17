@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Req } from '@nestjs/common';
 import { HistoryService } from './history.service';
 import { ShiftQueryDto } from 'src/shift/dto/shift-query.dto';
+import { TripQueryDto } from 'src/trip/dto/trip-query.dto';
 
 @Controller('history')
 export class HistoryController {
@@ -21,7 +22,7 @@ export class HistoryController {
   @Get('passenger/trips/')
   async getPassengerTripHistory(
     @Req() req: RequestWithUser,
-    @Query() query: ShiftQueryDto,
+    @Query() query: TripQueryDto,
   ) {
     return {
       message: 'Trip fetched successfully',
