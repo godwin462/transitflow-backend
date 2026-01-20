@@ -76,9 +76,9 @@ export class OtpService {
       return await this.createOtp(userId);
     }
     if (userOtp.retryAfter && userOtp.retryAfter > new Date()) {
-      console.log(
-        `You can try again after ${userOtp.retryAfter.toLocaleString()}, current time ${new Date().toLocaleString()}`,
-      );
+      // console.log(
+      //   `You can try again after ${userOtp.retryAfter.toLocaleString()}, current time ${new Date().toLocaleString()}`,
+      // );
       throw new HttpException(
         `You can try again after ${userOtp.retryAfter.toLocaleString()}`,
         400,

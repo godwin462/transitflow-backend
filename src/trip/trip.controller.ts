@@ -29,7 +29,7 @@ class TripController {
     @Body() payload: CreateTripDto,
     @Query() query: TripQueryDto,
   ) {
-    console.log(payload);
+    // console.log(payload);
     return {
       message: 'Trip creates successfully',
       success: true,
@@ -112,6 +112,16 @@ class TripController {
         tripId,
         payload.shiftId,
       ),
+    };
+  }
+
+  @Roles('passenger')
+  @Patch('passenger/cancel-trip/:tripId')
+  async cancelPassengerTrip(@Param('tripId') tripId: string) {
+    return {
+      message: 'Trip cancelled successfully',
+      success: true,
+      data: await this.tripService.cancelTrip(tripId),
     };
   }
 }
