@@ -2,6 +2,7 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import otpGenerator from 'otp-generator';
 import * as bcrypt from 'bcrypt';
+import { User } from 'generated/prisma/browser';
 
 @Injectable()
 export class OtpService {
@@ -126,5 +127,9 @@ export class OtpService {
         },
       }),
     };
+  }
+
+  generateTicket(user: User) {
+    return `TF-${this.generateOtp()}${user.username[0] + user.username[user.username.length - 1]}`;
   }
 }

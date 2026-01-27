@@ -80,7 +80,7 @@ class TripController {
     @Query() query: TripQueryDto,
   ) {
     return {
-      message: 'Trips fetched successfully',
+      message: 'Trip fetched successfully',
       success: true,
       data: await this.tripService.getActivePassengerTrip(req.user.id, query),
     };
@@ -93,7 +93,7 @@ class TripController {
     @Query() query: TripQueryDto,
   ) {
     return {
-      message: 'Trips fetched successfully',
+      message: 'Trip fetched successfully',
       success: true,
       data: await this.tripService.getTripByPassengerId(passengerId, query),
     };
@@ -106,7 +106,7 @@ class TripController {
     @Body() payload: MatchTripWithPublicVehicleDto,
   ) {
     return {
-      message: 'Trips fetched successfully',
+      message: 'Trip matched successfully',
       success: true,
       data: await this.tripService.matchPassengerTripWithPublicVehicle(
         tripId,

@@ -9,10 +9,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import type { CreateTripDto } from './dto/create-trip.dto';
 import type { UpdateTripDto } from './dto/update-trip.dto';
 import { Trip } from 'generated/prisma/browser';
+import { OtpService } from 'src/otp/otp.service';
 
 @Injectable()
 export class TripService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private otpService: OtpService,
+  ) {}
 
   async getTripById(id: string, query: TripQueryDto) {
     console.log(query);
@@ -75,15 +79,16 @@ export class TripService {
           'You currently have an active trip, please end the current trip',
         );
       }
+      const ticket = this.otpService.generateTicket(user);
       const id = randomUUID();
       await this.prisma.$executeRaw`
   INSERT INTO "Trip" (
-    "id", "name", "originName","destinationName", "passengerId",  "mode", "status",
+    "id", "name", "originName","destinationName", "ticket", "passengerId",  "mode", "status",
     "originPoint", "destinationPoint", "polylineString",
     "maxWalkMeters",
     "createdAt", "updatedAt"
   ) VALUES (
-            ${id}, ${tripPayload.name}, ${tripPayload.originName}, ${tripPayload.destinationName}, ${passengerId}, ${tripPayload.mode}::"TransportMode", 'pending'::"TripStatus",
+            ${id}, ${tripPayload.name}, ${tripPayload.originName}, ${tripPayload.destinationName}, ${ticket}, ${passengerId}, ${tripPayload.mode}::"TransportMode", 'pending'::"TripStatus",
             ST_SetSRID(ST_Point(${tripPayload.originPoint.longitude}, ${tripPayload.originPoint.latitude}), 4326),
             ST_SetSRID(ST_Point(${tripPayload.destinationPoint.longitude}, ${tripPayload.destinationPoint.latitude}), 4326),
             ${tripPayload.polylineString},

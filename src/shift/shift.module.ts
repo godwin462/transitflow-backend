@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { ShiftController } from './shift.controller';
 import { ShiftService } from './shift.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { OtpService } from 'src/otp/otp.service';
 
 @Module({
   controllers: [ShiftController],
-  providers: [ShiftService, PrismaService],
+  providers: [ShiftService, PrismaService, OtpService],
 })
 export class ShiftModule {}

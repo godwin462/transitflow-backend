@@ -143,6 +143,7 @@ model Shift {
   driverId        String
   vehicleId       String
   routeId         String
+  ticket          String
   origin          Unsupported("geometry") // Point
   destination     Unsupported("geometry") // Point
   createdAt       DateTime                @default(now())
@@ -162,13 +163,14 @@ model Trip {
   passengerId      String
   mode             TransportMode           @default(public)
   status           TripStatus              @default(pending)
-  shiftId          String?
+  shiftId          String
   createdAt        DateTime                @default(now())
   vehicleType      TripVehicleCategory?
   updatedAt        DateTime                @updatedAt
   polylineString   String
   originPoint      Unsupported("geometry") // Point
   destinationPoint Unsupported("geometry") // Point
+  ticket           String?
 
   maxWalkMeters Float
   earliestStart DateTime?

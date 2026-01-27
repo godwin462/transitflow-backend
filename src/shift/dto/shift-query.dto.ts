@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { ShiftStatus } from 'generated/prisma/enums';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ShiftStatus, TripStatus } from 'generated/prisma/enums';
 
 export class ShiftQueryDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
   @IsOptional()
   @IsBoolean()
@@ -20,7 +20,7 @@ export class ShiftQueryDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
   @IsOptional()
   @IsBoolean()
@@ -33,7 +33,7 @@ export class ShiftQueryDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
   @IsOptional()
   @IsBoolean()
@@ -46,7 +46,7 @@ export class ShiftQueryDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
   @IsOptional()
   @IsBoolean()
@@ -59,39 +59,68 @@ export class ShiftQueryDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
-  @Transform(({ value }) => {
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
-  })
-  @IsString()
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
     description: 'Filter shifts by driver ID',
-    example: 'driverId',
+    example: true,
   })
-  driverId?: string;
+  driverId?: boolean;
 
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value as boolean; // Returns original value if it's not a boolean string
+    return value as boolean;
   })
-  @IsString()
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
-    description: 'Filter shifts by vehicle ID',
-    example: 'vehicleId',
+    description: 'Include trips',
+    example: true,
   })
-  vehicleId?: string;
+  trips?: boolean;
 
-  @IsString()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
+  @IsBoolean()
   @IsOptional()
   @ApiProperty({
-    description: 'Filter shifts to include vehicle details',
-    example: 'vehicleId',
+    description: 'Include vehicle',
+    example: true,
   })
-  vehicle?: string;
+  vehicle?: boolean;
+
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: 'Filter shifts by passenger inclusion',
+    example: true,
+  })
+  passenger?: boolean;
+
+  @IsOptional()
+  @IsEnum(ShiftStatus)
+  @ApiProperty({
+    description: 'Filter shifts by status',
+    example: ShiftStatus.online,
+  })
+  status?: ShiftStatus;
+
+  @IsOptional()
+  @IsEnum(TripStatus)
+  @ApiProperty({
+    description: 'Filter trips by status',
+    example: TripStatus.pending,
+  })
+  tripStatus?: TripStatus;
 }

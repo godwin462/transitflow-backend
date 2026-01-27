@@ -9,6 +9,8 @@ import { UpdateShiftDto } from './dto/update-shift.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ShiftQueryDto } from './dto/shift-query.dto';
 import { Prisma } from 'generated/prisma/client';
+import { OtpService } from 'src/otp/otp.service';
+import { PickupDto } from './dto/pickup.dto';
 
 type GeoPoint = {
   type: 'Point';
@@ -38,7 +40,10 @@ type RouteRecord = {
 
 @Injectable()
 export class ShiftService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly otpService: OtpService,
+  ) {}
 
   async getShiftById(id: string, query: ShiftQueryDto) {
     // console.log(id, 'Query params: ', query);
@@ -50,6 +55,11 @@ export class ShiftService {
         route: !!query.route,
         vehicle: !!query.vehicle,
         driver: !!query.driver,
+        trips: query.trips
+          ? query.passenger
+            ? { include: { passenger: true } }
+            : true
+          : false,
       },
     });
     if (!shift) {
@@ -102,6 +112,7 @@ export class ShiftService {
       }
       const shiftId = randomUUID();
       const routeId = randomUUID();
+      const ticket = this.otpService.generateTicket(driver);
 
       await this.prisma.$transaction(async (tx) => {
         // 1. Create Route
@@ -116,9 +127,9 @@ export class ShiftService {
         // 2. Create Shift
         await tx.$executeRaw`
           INSERT INTO "Shift" (
-            id, name,"originName","destinationName", "startTime", "endTime", status, "driverId", "vehicleId", "routeId", "createdAt", "updatedAt", "origin", "destination"
+            id, name,"originName","destinationName", "ticket", "startTime", "endTime", status, "driverId", "vehicleId", "routeId", "createdAt", "updatedAt", "origin", "destination"
           ) VALUES (
-            ${shiftId}, ${shiftPayload.name},${shiftPayload.originName},${shiftPayload.destinationName}, ${shiftPayload.startTime}, ${shiftPayload.endTime}, 'online'::"ShiftStatus", ${driverId}, ${driver.vehicle!.id}, ${routeId}, NOW(), NOW(),
+            ${shiftId}, ${shiftPayload.name},${shiftPayload.originName},${shiftPayload.destinationName}, ${ticket}, ${shiftPayload.startTime}, ${shiftPayload.endTime}, 'online'::"ShiftStatus", ${driverId}, ${driver.vehicle!.id}, ${routeId}, NOW(), NOW(),
             ST_SetSRID(ST_MakePoint(${shiftPayload.origin.longitude}, ${shiftPayload.origin.latitude}), 4326),
             ST_SetSRID(ST_MakePoint(${shiftPayload.destination.longitude}, ${shiftPayload.destination.latitude}), 4326)
           )
@@ -250,5 +261,42 @@ export class ShiftService {
   `;
     // console.log(shifts[0].destination.coordinates);
     return shifts[0] ? shifts[0] : null;
+  }
+
+  async pickupPassenger(shiftId: string, data: PickupDto) {
+    const shift = await this.prisma.shift.findUnique({
+      where: { id: shiftId },
+    });
+    if (!shift) {
+      throw new NotFoundException('Shift not found');
+    }
+    if (shift.status !== 'online') {
+      throw new BadRequestException('Driver is not online');
+    }
+    const tripExists = await this.prisma.trip.findUnique({
+      where: { id: data.tripId, ticket: data.ticket },
+    });
+    if (!tripExists) {
+      throw new NotFoundException('Trip not found');
+    }
+    if (tripExists.shiftId) {
+      throw new BadRequestException('Trip already matched to a ride');
+    }
+    return this.prisma.trip.update({
+      where: { id: data.tripId },
+      data: { shiftId: shift.id },
+      include: {
+        shift: true,
+      },
+    });
+  }
+
+  async getShiftTrips(shiftId: string, query: ShiftQueryDto) {
+    return this.prisma.trip.findMany({
+      where: { shiftId, status: query.tripStatus },
+      include: {
+        passenger: true,
+      },
+    });
   }
 }
