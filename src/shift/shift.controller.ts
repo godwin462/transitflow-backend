@@ -102,4 +102,16 @@ export class ShiftController {
       data: await this.shiftService.getShiftTrips(shiftId, query),
     };
   }
+
+  @Patch(':shiftId/dropoff/:tripId')
+  async dropOffPassenger(
+    @Param('shiftId') shiftId: string,
+    @Param('tripId') tripId: string,
+  ) {
+    return {
+      message: 'Passenger dropped off successfully',
+      success: true,
+      data: await this.shiftService.dropoffPassenger(shiftId, tripId),
+    };
+  }
 }

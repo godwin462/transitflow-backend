@@ -284,7 +284,7 @@ export class ShiftService {
     }
     return this.prisma.trip.update({
       where: { ticket: data.ticket },
-      data: { shiftId: shift.id },
+      data: { shiftId: shift.id, status: 'boarded' },
       include: {
         shift: true,
         passenger: true,
@@ -299,6 +299,39 @@ export class ShiftService {
         status: query.tripStatus ? { in: query.tripStatus } : undefined,
       },
       include: {
+        passenger: true,
+      },
+    });
+  }
+
+  async dropoffPassenger(shiftId: string, tripId: string) {
+    const shift = await this.prisma.shift.findUnique({
+      where: { id: shiftId },
+    });
+    if (!shift) {
+      throw new NotFoundException('Shift not found');
+    }
+    if (shift.status !== 'online') {
+      throw new BadRequestException('Driver is not online');
+    }
+    const tripExists = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+    if (!tripExists) {
+      throw new NotFoundException('Trip not found');
+    }
+    if (tripExists.shiftId !== shift.id) {
+      throw new BadRequestException('Trip does not belong to this shift');
+    }
+    if (tripExists.status == 'completed') {
+      return tripExists;
+    }
+
+    return this.prisma.trip.update({
+      where: { id: tripId },
+      data: { status: 'completed' },
+      include: {
+        shift: true,
         passenger: true,
       },
     });
