@@ -124,6 +124,16 @@ class TripController {
       data: await this.tripService.cancelTrip(tripId),
     };
   }
+
+  @Roles('passenger')
+  @Patch('passenger/request-dropoff/:tripId')
+  async requestDropoffPassengerTrip(@Param('tripId') tripId: string) {
+    return {
+      message: 'Dropoff requested successfully',
+      success: true,
+      data: await this.tripService.requestDropoffPassengerTrip(tripId),
+    };
+  }
 }
 
 export default TripController;

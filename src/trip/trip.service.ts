@@ -243,4 +243,25 @@ export class TripService {
       },
     });
   }
+
+  async requestDropoffPassengerTrip(tripId: string) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+    if (!trip.shiftId) {
+      throw new BadRequestException('Trip is not matched');
+    }
+    if (trip.status == 'alighting') {
+      throw new BadRequestException('Trip is already alighting');
+    }
+    return this.prisma.trip.update({
+      where: { id: tripId },
+      data: {
+        status: 'alighting',
+      },
+    });
+  }
 }
