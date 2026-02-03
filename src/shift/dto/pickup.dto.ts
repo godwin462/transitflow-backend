@@ -3,13 +3,6 @@ import { IsNotEmpty, IsString, MinLength, MaxLength } from 'class-validator';
 
 export class PickupDto {
   @IsString()
-  @IsNotEmpty()
-  @ApiProperty({
-    description: 'Trip ID',
-    example: 'tripId',
-  })
-  tripId: string;
-  @IsString()
   @MaxLength(11)
   @MinLength(11)
   @IsNotEmpty()

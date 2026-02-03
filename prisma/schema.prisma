@@ -163,14 +163,14 @@ model Trip {
   passengerId      String
   mode             TransportMode           @default(public)
   status           TripStatus              @default(pending)
-  shiftId          String
+  shiftId          String?
   createdAt        DateTime                @default(now())
   vehicleType      TripVehicleCategory?
   updatedAt        DateTime                @updatedAt
   polylineString   String
   originPoint      Unsupported("geometry") // Point
   destinationPoint Unsupported("geometry") // Point
-  ticket           String?
+  ticket           String                  @unique
 
   maxWalkMeters Float
   earliestStart DateTime?
@@ -292,12 +292,14 @@ enum TransportMode {
 
 enum TripStatus {
   searching
-  completed // trip
+  completed
   cancelled
   accepted
   pending
   matched
+  boarded
   started
+  alighting
 }
 
 enum RideMatchStatus {

@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { ShiftStatus, TripStatus } from 'generated/prisma/enums';
 
 export class ShiftQueryDto {
@@ -117,10 +123,18 @@ export class ShiftQueryDto {
   status?: ShiftStatus;
 
   @IsOptional()
-  @IsEnum(TripStatus)
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim());
+    }
+    return value;
+  })
+  @IsArray()
+  @IsEnum(TripStatus, { each: true })
   @ApiProperty({
     description: 'Filter trips by status',
-    example: TripStatus.pending,
+    example: [TripStatus.pending],
+    isArray: true,
   })
-  tripStatus?: TripStatus;
+  tripStatus?: TripStatus[];
 }

@@ -274,7 +274,7 @@ export class ShiftService {
       throw new BadRequestException('Driver is not online');
     }
     const tripExists = await this.prisma.trip.findUnique({
-      where: { id: data.tripId, ticket: data.ticket },
+      where: { ticket: data.ticket },
     });
     if (!tripExists) {
       throw new NotFoundException('Trip not found');
@@ -283,17 +283,21 @@ export class ShiftService {
       throw new BadRequestException('Trip already matched to a ride');
     }
     return this.prisma.trip.update({
-      where: { id: data.tripId },
+      where: { ticket: data.ticket },
       data: { shiftId: shift.id },
       include: {
         shift: true,
+        passenger: true,
       },
     });
   }
 
   async getShiftTrips(shiftId: string, query: ShiftQueryDto) {
     return this.prisma.trip.findMany({
-      where: { shiftId, status: query.tripStatus },
+      where: {
+        shiftId,
+        status: query.tripStatus ? { in: query.tripStatus } : undefined,
+      },
       include: {
         passenger: true,
       },
