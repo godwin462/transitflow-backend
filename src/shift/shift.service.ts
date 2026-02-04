@@ -282,7 +282,9 @@ export class ShiftService {
     if (tripExists.shiftId) {
       if (['canceled', 'completed'].includes(tripExists.status)) {
         throw new BadRequestException('Trip not active');
-      } else {
+      } else if (
+        !['searching', 'matched', 'pending'].includes(tripExists.status)
+      ) {
         throw new BadRequestException('Trip already matched to a ride');
       }
     }
