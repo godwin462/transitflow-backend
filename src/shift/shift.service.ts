@@ -324,7 +324,7 @@ export class ShiftService {
       throw new BadRequestException('Trip does not belong to this shift');
     }
     if (tripExists.status == 'completed') {
-      return tripExists;
+      throw new BadRequestException('Trip is already completed');
     }
 
     return this.prisma.trip.update({
