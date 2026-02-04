@@ -215,10 +215,15 @@ export class TripService {
       where: { id: shiftId },
       include: {
         vehicle: true,
+        trips: true,
       },
     });
     if (!shift) {
       throw new NotFoundException('Shift not found');
+    }
+    // TODO: calculate possible dropoff before rejecting hail, and let the hailer know that the vehicle is full and a passenger will be dropped off at a certain stop before the pickup
+    if (shift.trips.length >= shift.vehicle.capacity) {
+      throw new BadRequestException('Vehicle is full');
     }
     return this.prisma.trip.update({
       where: { id: tripId },

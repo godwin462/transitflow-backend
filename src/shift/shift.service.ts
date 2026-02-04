@@ -280,8 +280,13 @@ export class ShiftService {
       throw new NotFoundException('Trip not found');
     }
     if (tripExists.shiftId) {
-      throw new BadRequestException('Trip already matched to a ride');
+      if (['canceled', 'completed'].includes(tripExists.status)) {
+        throw new BadRequestException('Trip not active');
+      } else {
+        throw new BadRequestException('Trip already matched to a ride');
+      }
     }
+
     return this.prisma.trip.update({
       where: { ticket: data.ticket },
       data: { shiftId: shift.id, status: 'boarded' },
